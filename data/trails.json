@@ -1,0 +1,1598 @@
+[
+  {
+    "id": "trail-1",
+    "name": "Hiking at Grand Canyon National Park",
+    "parkName": "Grand Canyon National Park",
+    "parkCode": "grca",
+    "location": "Grand Canyon National Park, AZ",
+    "state": "AZ",
+    "description": "Entirely within the state of Arizona, the park encompasses 278 miles (447 km) of the Colorado River and adjacent uplands. Located on the ancestral homelands of 11 present day Tribal Communities, Grand",
+    "difficulty": "moderate",
+    "length": "Varies",
+    "elevationGain": "Varies",
+    "imageUrl": "https://www.nps.gov/common/uploads/structured_data/3C7B12D1-1DD8-B71B-0BCE0712F9CEA155.jpg",
+    "imageAlt": "The canyon glows orange as people visit Mather Point, a rock outcropping that juts into Grand Canyon",
+    "coordinates": {
+      "lat": 36.0001165336,
+      "lng": -112.121516363
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-2",
+    "name": "Hike Bradley Fork Trail",
+    "parkName": "Great Smoky Mountains National Park",
+    "parkCode": "grsm",
+    "location": "Great Smoky Mountains National Park, NC,TN",
+    "state": "NC,TN",
+    "description": "The Bradley Fork Trail offers a scenic and diverse outdoor experience, featuring picturesque creeks, seasonal wildflowers, fishing access, horseback riding opportunities, and backcountry camping.",
+    "difficulty": "easy",
+    "length": "4 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/98DF533B-92A9-59C2-ADB3B1121803CC9D.jpg",
+    "imageAlt": "A small cascading waterfall on rocks in a stream.",
+    "coordinates": {
+      "lat": 35.56307604684223,
+      "lng": -83.3107001730948
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-3",
+    "name": "Hike Little River Trail",
+    "parkName": "Great Smoky Mountains National Park",
+    "parkCode": "grsm",
+    "location": "Great Smoky Mountains National Park, NC,TN",
+    "state": "NC,TN",
+    "description": "Once a railroad bed, the Little River Trail now offers a peaceful hike through the Elkmont area of Great Smoky Mountains National Park. As you follow the river’s gentle flow, you’ll pass remnants of t",
+    "difficulty": "easy",
+    "length": "1.4 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/C815BD45-06C3-CD1F-919C654CC3DB2B5D.jpg",
+    "imageAlt": "A rocky river in the forest with a hiker icon at the bottom of the page.",
+    "coordinates": {
+      "lat": 35.653664145607195,
+      "lng": -83.58020647415856
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-4",
+    "name": "Hike the Gatlinburg Trail",
+    "parkName": "Great Smoky Mountains National Park",
+    "parkCode": "grsm",
+    "location": "Great Smoky Mountains National Park, NC,TN",
+    "state": "NC,TN",
+    "description": "Enjoy a riverside stroll approximately 4 miles (6.4 km) roundtrip through a cove hardwood forest along one of the only dog- and bike-friendly trails in the park. This trail includes sections of sidewa",
+    "difficulty": "easy",
+    "length": "4 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/23F49D6B-A3E5-440F-18AB6212B3808F51.jpg",
+    "imageAlt": "A bridge over a river surrounded by green trees. A road past the bridge in the distance.",
+    "coordinates": {
+      "lat": 35.69139714624851,
+      "lng": -83.5352985738046
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-5",
+    "name": "Hiking with Traction Devices",
+    "parkName": "Rocky Mountain National Park",
+    "parkCode": "romo",
+    "location": "Rocky Mountain National Park, CO",
+    "state": "CO",
+    "description": "Enjoy the winter wonderland that Rocky has to offer from late October to early June. When there is hard-packed snow and ice on the trails, don't forget to use traction devices!",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/9585CABC-E92F-B930-D190EB7FF02323DC.jpg",
+    "imageAlt": "A person is hiking on a snow-covered trail with traction devices",
+    "coordinates": {
+      "lat": 40.36623073698713,
+      "lng": -105.56096926388426
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-6",
+    "name": "Bierstadt Lake",
+    "parkName": "Rocky Mountain National Park",
+    "parkCode": "romo",
+    "location": "Rocky Mountain National Park, CO",
+    "state": "CO",
+    "description": "This lake is a hidden gem in the Bear Lake Corridor of the park! This lake sits atop a forested moraine, a ridge composed of material left behind thousands of years ago by receding glaciers.",
+    "difficulty": "easy",
+    "length": "2 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/6B43C13D-03FC-BBE6-F85C7517882E96F4.jpg",
+    "imageAlt": "The lake is frozen with a layer of snow on top. Mountains in the distance are covered with snow",
+    "coordinates": {
+      "lat": 40.3556924,
+      "lng": -105.6972879
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-7",
+    "name": "Hike Around Bear Lake",
+    "parkName": "Rocky Mountain National Park",
+    "parkCode": "romo",
+    "location": "Rocky Mountain National Park, CO",
+    "state": "CO",
+    "description": "Bear Lake is seen in winter and spring. This lake and the surrounding trail is typically covered with snow from late October through late May. Be prepared for snow and ice on the trail. Traction devic",
+    "difficulty": "easy",
+    "length": "0.7 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/98ED2602-DE74-B692-92FAC56FDFF6E956.jpg",
+    "imageAlt": "Two Junior Rangers are gazing out at Bear Lake",
+    "coordinates": {
+      "lat": 40.311811,
+      "lng": -105.645745
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-8",
+    "name": "Hiking in Yosemite",
+    "parkName": "Yosemite National Park",
+    "parkCode": "yose",
+    "location": "Yosemite National Park, CA",
+    "state": "CA",
+    "description": "From a short walk to the base of a waterfall to a multi-day hike deep into the Yosemite Wilderness, taking a hike is one of the best ways to experience Yosemite's spectacular scenery. Yosemite has an ",
+    "difficulty": "easy",
+    "length": "800 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/8F8DE81B-9AB4-1040-14604A0792CF0B0F.jpg",
+    "imageAlt": "Lower Yosemite Fall full of water in spring",
+    "coordinates": {
+      "lat": 37.84883288,
+      "lng": -119.5571873
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-9",
+    "name": "La Verkin Creek Trail to Kolob Arch",
+    "parkName": "Zion National Park",
+    "parkCode": "zion",
+    "location": "Zion National Park, UT",
+    "state": "UT",
+    "description": "The La Verkin Creek Trail to the Kolob Arch allows hikers outstanding opportunities for solitude in a primitive area of Zion Wilderness. The trail begins at Lee Pass with stunning views of the Kolob C",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/C8607E36-E5AE-CA10-130C375E3FB44434.jpg",
+    "imageAlt": "Looking up at an orange-red sandstone arch on a cliff-face with clear blue skies overhead.",
+    "coordinates": {
+      "lat": 37.4522213604,
+      "lng": -113.191397605
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-10",
+    "name": "Kayenta Trail",
+    "parkName": "Zion National Park",
+    "parkCode": "zion",
+    "location": "Zion National Park, UT",
+    "state": "UT",
+    "description": "The moderate, 2.0 mi (3.2 km) Kayenta Trail follows the Virgin River before ascending to the Lower and Upper Emerald Pool Trails. Provides panoramic views of Zion Canyon along the way. Long drop-offs ",
+    "difficulty": "moderate",
+    "length": "2.0 mi",
+    "elevationGain": "500-1,500 ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/54128644-C0FE-3210-AB39C4918EED0D2A.jpg",
+    "imageAlt": "A set of red sandstone stairs lined with loose rocks and green foliage leads out of frame.",
+    "coordinates": {
+      "lat": 37.2592462593,
+      "lng": -112.951341871
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-11",
+    "name": "Weeping Rock",
+    "parkName": "Zion National Park",
+    "parkCode": "zion",
+    "location": "Zion National Park, UT",
+    "state": "UT",
+    "description": "Short but steep! From the parking area, you'll cross the bridge and head to the left onto a paved trail to Weeping Rock. Along the way, look for small trailside exhibits and watch for minor drop-offs.",
+    "difficulty": "hard",
+    "length": "Varies",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/CB137FB1-BD88-59D0-BAF97CE53CE3EC59.jpg",
+    "imageAlt": "A large, arch shaped alcove streaked with dark shades of orange on red rock.",
+    "coordinates": {
+      "lat": 37.29839254,
+      "lng": -113.0265138
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-12",
+    "name": "Hike Jordan Pond Path",
+    "parkName": "Acadia National Park",
+    "parkCode": "acad",
+    "location": "Acadia National Park, ME",
+    "state": "ME",
+    "description": "The trail follows the shore of Jordan Pond, providing iconic views of steep, glacially sculpted mountains and the glacially carved valley that is now Jordan Pond.",
+    "difficulty": "hard",
+    "length": "3.3 mi",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/5FE2C6BD-CAB8-DD39-67BFF197DDF1D79C.jpg",
+    "imageAlt": "view of lake covered in ice",
+    "coordinates": {
+      "lat": 44.32071067,
+      "lng": -68.253492
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-13",
+    "name": "Hike Village Green to Sieur de Monts with Island Explorer Bus",
+    "parkName": "Acadia National Park",
+    "parkCode": "acad",
+    "location": "Acadia National Park, ME",
+    "state": "ME",
+    "description": "Beginning at the Village Green in Bar Harbor and ending at the Sieur de Mont Area this hike includes the Great Meadow Loop, the Hemlock Road Trail, and the Jesup Path. With virtually no elevation gain",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/FD1C69A7-DDE5-97F8-4C763B0F93A707F2.jpg",
+    "imageAlt": "Two sunlit green mountains are reflected in a pool of water with grasses under a clear blue sky.",
+    "coordinates": {
+      "lat": 44.3878773991,
+      "lng": -68.2055590004
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-14",
+    "name": "Hike Pemetic Summit with Island Explorer Bus",
+    "parkName": "Acadia National Park",
+    "parkCode": "acad",
+    "location": "Acadia National Park, ME",
+    "state": "ME",
+    "description": "The hike up and over Pemetic takes hikers to the shores of both Bubble and Jordan Pond and summits Pemetic Mountain. Nearly 360-degree views look out over Cadillac, Sargent and Penobscot peaks, the At",
+    "difficulty": "hard",
+    "length": "0.1 mi",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/94B3AB58-9E30-A934-2B9DB591E8B431C6.jpg",
+    "imageAlt": "A hiker stands on an exposed granite peak, looking out at mountains rising across the valley.",
+    "coordinates": {
+      "lat": 44.3500114988,
+      "lng": -68.2414535996
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-15",
+    "name": "Take a Half-Day Hike in Glacier",
+    "parkName": "Glacier National Park",
+    "parkCode": "glac",
+    "location": "Glacier National Park, MT",
+    "state": "MT",
+    "description": "Glacier is a hiker’s paradise. Spend part of your day on one of these 3-5 hour hikes.",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/3B8C05FB-1DD8-B71B-0B450073CC208DF4.jpg",
+    "imageAlt": "Rocky trail along creek in dense mossy forest",
+    "coordinates": {
+      "lat": 48.68414678,
+      "lng": -113.8009306
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-16",
+    "name": "Take a Full Day Hike in Glacier",
+    "parkName": "Glacier National Park",
+    "parkCode": "glac",
+    "location": "Glacier National Park, MT",
+    "state": "MT",
+    "description": "Glacier is a hiker’s paradise. Spend your whole day in nature on one of these popular trails.",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/78F12204-1DD8-B71B-0B5FECD681EA6B76.jpg",
+    "imageAlt": "Group of three hikes subalpine trail toward large mountain",
+    "coordinates": {
+      "lat": 48.68414678,
+      "lng": -113.8009306
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-17",
+    "name": "Hike to Spray Falls",
+    "parkName": "Mount Rainier National Park",
+    "parkCode": "mora",
+    "location": "Mount Rainier National Park, WA",
+    "state": "WA",
+    "description": "Enjoy a short hike from Mowich Lake to a large cascading waterfall fed by a glacier.",
+    "difficulty": "easy",
+    "length": "0.25 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/DB335189-B92B-C238-08DCC01BA3513B85.jpg",
+    "imageAlt": "Veil-like waterfall cascades over large cliff with small boulders in foreground",
+    "coordinates": {
+      "lat": 46.93280203064368,
+      "lng": -121.86377466092137
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-18",
+    "name": "Hike to Silver Falls",
+    "parkName": "Mount Rainier National Park",
+    "parkCode": "mora",
+    "location": "Mount Rainier National Park, WA",
+    "state": "WA",
+    "description": "Enjoy a moderate, family-friendly loop hike through the forest to a beautiful waterfall along the Ohanapecosh River.",
+    "difficulty": "moderate",
+    "length": "3 mi",
+    "elevationGain": "500-1,500 ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/8CB34879-B82D-FB3B-AFEEC9E0DDCC350F.jpg",
+    "imageAlt": "A cascading waterfall flows over steep rocks",
+    "coordinates": {
+      "lat": 46.75818283257418,
+      "lng": -121.5574128040985
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-19",
+    "name": "Hike to Shriner Peak Fire Lookout",
+    "parkName": "Mount Rainier National Park",
+    "parkCode": "mora",
+    "location": "Mount Rainier National Park, WA",
+    "state": "WA",
+    "description": "Embark on a strenuous hike up to a historic fire lookout with adjacent backcountry camping sites and enjoy views of Mount Rainier and the surrounding valley.",
+    "difficulty": "hard",
+    "length": "2.5 mi",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/89084095-9BAD-DCB3-36319DBC4D9948B0.jpeg",
+    "imageAlt": "View of Mount Rainier from Shriner Peak Fire Lookout",
+    "coordinates": {
+      "lat": 46.801862656,
+      "lng": -121.555061881
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-20",
+    "name": "Walk the Moments in Time Trail",
+    "parkName": "Olympic National Park",
+    "parkCode": "olym",
+    "location": "Olympic National Park, WA",
+    "state": "WA",
+    "description": "Take a peaceful stroll at Barnes Point on Lake Crescent on the Moments in Time Trail.",
+    "difficulty": "easy",
+    "length": "0.8 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/722DEB8B-FCB7-7E6C-3733F1364F455AA8.jpg",
+    "imageAlt": "A trail leads through an old growth forest surrounded by ferns.",
+    "coordinates": {
+      "lat": 48.05922341775479,
+      "lng": -123.79891128156686
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-21",
+    "name": "Take a Short Hike Near the Visitor Center",
+    "parkName": "Olympic National Park",
+    "parkCode": "olym",
+    "location": "Olympic National Park, WA",
+    "state": "WA",
+    "description": "Near the Olympic National Park Visitor Center, two short loop hikes take visitors through peaceful, green lowland forests.",
+    "difficulty": "easy",
+    "length": "5.2 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/3009024F-C397-57CA-240DC5804EF08407.jpg",
+    "imageAlt": "A trailhead with a sign that reads \"Peabody Creek Trail.\"",
+    "coordinates": {
+      "lat": 48.0994113559,
+      "lng": -123.4257566
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-22",
+    "name": "See Madison Falls",
+    "parkName": "Olympic National Park",
+    "parkCode": "olym",
+    "location": "Olympic National Park, WA",
+    "state": "WA",
+    "description": "Madison Falls is a stunning 60-foot waterfall near the Elwha River. It's also one of the most accessible destinations at the park, making it a great stop for families and visitors of all abilities. ",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/EAE88453-0AC9-CCF0-854AAAA1F2EB1712.jpg",
+    "imageAlt": "A waterfall rushes over mossy rocks to a pond below.",
+    "coordinates": {
+      "lat": 48.0410895047,
+      "lng": -123.590007312
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-23",
+    "name": "Stony Man",
+    "parkName": "Shenandoah National Park",
+    "parkCode": "shen",
+    "location": "Shenandoah National Park, VA",
+    "state": "VA",
+    "description": "MILE 41.7 | Pets are not allowed on this hike. This enjoyable hike brings you to an outstanding view of the Shenandoah Valley, Massanutten Mountain, and beyond.",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/D79AAFA0-97CB-4765-C8AE1C915FD064C3.jpg",
+    "imageAlt": "A woman with a baby on her back takes a picture with her phone on top of a mountain summit.",
+    "coordinates": {
+      "lat": 38.593098,
+      "lng": -78.375422
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-24",
+    "name": "Turk Mountain",
+    "parkName": "Shenandoah National Park",
+    "parkCode": "shen",
+    "location": "Shenandoah National Park, VA",
+    "state": "VA",
+    "description": "MILE 94.1 | A hike to the 2,981’ summit of Turk Mountain, located in the Shenandoah Wilderness, that provides a wonderful view to the west.",
+    "difficulty": "easy",
+    "length": "15 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/A5839F3D-AFDE-EE4A-9CC7F12CB0E43FF9.jpg",
+    "imageAlt": "A mountain peak in the distance.",
+    "coordinates": {
+      "lat": 38.1290918138865,
+      "lng": -78.78449570360236
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-25",
+    "name": "Riprap - Wildcat Ridge",
+    "parkName": "Shenandoah National Park",
+    "parkCode": "shen",
+    "location": "Shenandoah National Park, VA",
+    "state": "VA",
+    "description": "MILE 90 or 92.1 | This loop can be hiked from Riprap Parking or Wildcat Ridge Parking. It takes you through the forests of the Shenandoah Wilderness and over several stream crossings, while offering b",
+    "difficulty": "easy",
+    "length": "15 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/19ADC95A-EFA3-FB45-061592EC4C3974C0.jpg",
+    "imageAlt": "A color photograph of a woman sitting on a rock atop a mountain looking to the side.",
+    "coordinates": {
+      "lat": 38.177746,
+      "lng": -78.765162
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-26",
+    "name": "Hiking at Arches",
+    "parkName": "Arches National Park",
+    "parkCode": "arch",
+    "location": "Arches National Park, UT",
+    "state": "UT",
+    "description": "Arches contains a variety of hiking trails, from easy/moderate to long and strenuous. Many trails use cairns (stacks of rocks) for markers and cross broad rock surfaces, requiring attention to follow.",
+    "difficulty": "hard",
+    "length": "Varies",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/78A2747C-CEC5-0C9B-464978166B28ED01.jpg",
+    "imageAlt": "Three hikers walk on a narrow fin of sandstone, with more fins behind them",
+    "coordinates": {
+      "lat": 38.72261844,
+      "lng": -109.5863666
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-27",
+    "name": "Bristlecone Loop Trail",
+    "parkName": "Bryce Canyon National Park",
+    "parkCode": "brca",
+    "location": "Bryce Canyon National Park, UT",
+    "state": "UT",
+    "description": "The Bristlecone Loop, an easy 1 mile hike, meanders through the forest atop this highest portion of the park, reaching elevations over 9,100 feet (2778 m). Here you will pass by bristlecone pines up t",
+    "difficulty": "easy",
+    "length": "1 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/FB7928C3-E7E0-F4F1-7203EE9AB6E53182.jpg",
+    "imageAlt": "Red rocks topped with dark green trees slope down into a canyon of red rocks",
+    "coordinates": {
+      "lat": 37.4752770246,
+      "lng": -112.239712189
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-28",
+    "name": "Figure-8 Combination",
+    "parkName": "Bryce Canyon National Park",
+    "parkCode": "brca",
+    "location": "Bryce Canyon National Park, UT",
+    "state": "UT",
+    "description": "The Figure-8 Combination combines three amphitheater hikes, Queen's Garden, Navajo Loop, and the Peekaboo Loop, into one ultimate hike! We recommend a clockwise direction descending Queen's Garden, co",
+    "difficulty": "easy",
+    "length": "6.4 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/02376A79-B1E6-7694-6D5870C592C5B63A.jpg",
+    "imageAlt": "Red rock formations on top of a steep sandy slope with distant red rock formations in the background",
+    "coordinates": {
+      "lat": 37.6284356447,
+      "lng": -112.162981721
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-29",
+    "name": "Queen's/Navajo Combination Loop",
+    "parkName": "Bryce Canyon National Park",
+    "parkCode": "brca",
+    "location": "Bryce Canyon National Park, UT",
+    "state": "UT",
+    "description": "Our most popular hike in the park and the one we most recommend to first-time visitors. The Queen's/Navajo Combination Loop combines the open views and unique hoodoos of the Queen's Garden Trail with ",
+    "difficulty": "easy",
+    "length": "2.9 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/97B393CF-999C-3A86-2E8713CB94E28EB1.jpeg",
+    "imageAlt": "Hikers walk along a trail towards an open archway in the red rock",
+    "coordinates": {
+      "lat": 37.6284356447,
+      "lng": -112.162981721
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-30",
+    "name": "Hiking at Canyonlands",
+    "parkName": "Canyonlands National Park",
+    "parkCode": "cany",
+    "location": "Canyonlands National Park, UT",
+    "state": "UT",
+    "description": "Canyonlands has hundreds of miles of hiking trails which explore the park’s natural and cultural features. Both Island in the Sky and The Needles provide ample opportunities for short walks, day hikes",
+    "difficulty": "easy",
+    "length": "60 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/A4979F35-C41E-D955-A00A86F2669BC0E4.jpg",
+    "imageAlt": "Two hikers read a trailhead sign, juniper tree and rock formation in backgound",
+    "coordinates": {
+      "lat": 38.24555783,
+      "lng": -109.8801624
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-31",
+    "name": "Valley Trail - Phelps Lake Overlook",
+    "parkName": "Grand Teton National Park",
+    "parkCode": "grte",
+    "location": "Grand Teton National Park, WY",
+    "state": "WY",
+    "description": "Travel from Teton Village to the Phelps Lake Overlook on this strenuous hike.",
+    "difficulty": "hard",
+    "length": "Varies",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/FE45DD3A-0272-4601-FEC1167ACE27DE9F.jpg",
+    "imageAlt": "A lake surrounded by trees as viewed from above.",
+    "coordinates": {
+      "lat": 43.81853565,
+      "lng": -110.7054666
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-32",
+    "name": "Open Canyon",
+    "parkName": "Grand Teton National Park",
+    "parkCode": "grte",
+    "location": "Grand Teton National Park, WY",
+    "state": "WY",
+    "description": "Take in spectacular views from Mount Hunt Divide on this very strenuous hike.",
+    "difficulty": "hard",
+    "length": "Varies",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/2D725CEE-BD89-DB88-4EA47EF7EFF3B2AF.jpg",
+    "imageAlt": "A mountainous canyon covered in patchy snow.",
+    "coordinates": {
+      "lat": 43.81853565,
+      "lng": -110.7054666
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-33",
+    "name": "Granite Canyon",
+    "parkName": "Grand Teton National Park",
+    "parkCode": "grte",
+    "location": "Grand Teton National Park, WY",
+    "state": "WY",
+    "description": "Hike through forests and meadows in Granite Canyon on this moderately strenuous to strenuous hike.",
+    "difficulty": "hard",
+    "length": "Varies",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/FFBA7BDC-0359-7C70-AE946BC387C3FEB9.jpg",
+    "imageAlt": "A rock pinnacle towers above at the top of a slope covered in boulders and green vegetation.",
+    "coordinates": {
+      "lat": 43.81853565,
+      "lng": -110.7054666
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-34",
+    "name": "Monarch Lake",
+    "parkName": "Sequoia & Kings Canyon National Parks",
+    "parkCode": "seki",
+    "location": "Sequoia & Kings Canyon National Parks, CA",
+    "state": "CA",
+    "description": "Upper and Lower Monarch Lakes are gorgeous alpine lakes that lie at the base of Sawtooth Peak. You can hike this 10-mile route as a day hike or an as an overnight backpacking trip, but be aware that c",
+    "difficulty": "easy",
+    "length": "1 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/E311A5AB-FD89-0571-D8AA532F4F3BDF3C.jpg",
+    "imageAlt": "A woman fishing in an alpine lake surrounded by granite walls.",
+    "coordinates": {
+      "lat": 36.71277299,
+      "lng": -118.587429
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-35",
+    "name": "Eagle and Mosquito Lakes",
+    "parkName": "Sequoia & Kings Canyon National Parks",
+    "parkCode": "seki",
+    "location": "Sequoia & Kings Canyon National Parks, CA",
+    "state": "CA",
+    "description": "Both Eagle and Mosquito lakes offer beautiful views of Mineral Kings alpine landscape. Eagle and Mosquito Lakes trails share the same route for the first 2 miles. The trail for both is 10 miles out an",
+    "difficulty": "easy",
+    "length": "2 mi",
+    "elevationGain": "3,000 ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/E2AE3185-C715-3ADC-ED06E647A892DA32.jpg",
+    "imageAlt": "A large lake surrounded by forest covered granite walls.",
+    "coordinates": {
+      "lat": 36.71277299,
+      "lng": -118.587429
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-36",
+    "name": "Cold Springs Nature Trail",
+    "parkName": "Sequoia & Kings Canyon National Parks",
+    "parkCode": "seki",
+    "location": "Sequoia & Kings Canyon National Parks, CA",
+    "state": "CA",
+    "description": "The Cold Springs Nature Trail is a great option for visitors looking for an easier trail and staying at the Cold Springs Campground. Many of the hikes in the Mineral King area are long and steep. This",
+    "difficulty": "hard",
+    "length": "3 mi",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/E2627328-DBB9-B469-B7F74943BD3A28B1.jpg",
+    "imageAlt": "A sign reading \"Cold Springs Campground\" nestled between yellow plants.",
+    "coordinates": {
+      "lat": 36.71277299,
+      "lng": -118.587429
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-37",
+    "name": "Visit the White River Visitor Center",
+    "parkName": "Badlands National Park",
+    "parkCode": "badl",
+    "location": "Badlands National Park, SD",
+    "state": "SD",
+    "description": "The White River Visitor Center is the main facility in the South Unit of the park. Be sure to stop by to pick up maps, enjoy museum exhibits, and chat with rangers about the significance of the Badlan",
+    "difficulty": "easy",
+    "length": "6+ mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/3D227128-B2F0-4BE5-91148EF48FA564F8.jpg",
+    "imageAlt": "a squat tan building with a brown porch and a tree.",
+    "coordinates": {
+      "lat": 43.68584846,
+      "lng": -102.482942
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-38",
+    "name": "Hiking Badlands Back Roads With Your Dog",
+    "parkName": "Badlands National Park",
+    "parkCode": "badl",
+    "location": "Badlands National Park, SD",
+    "state": "SD",
+    "description": "Back country roads are a great place to escape the everyday with your pet.",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/5B467CC6-1DD8-B71B-0B335B7B5936F5FE.jpg",
+    "imageAlt": "Siberian husky pulls against his leash while walking along a road at Badlands National Park.",
+    "coordinates": {
+      "lat": 43.68584846,
+      "lng": -102.482942
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-39",
+    "name": "Horseback Riding in the Badlands",
+    "parkName": "Badlands National Park",
+    "parkCode": "badl",
+    "location": "Badlands National Park, SD",
+    "state": "SD",
+    "description": "Enjoy views of the Badlands from the saddle! Although no commercial horse rental or day rides are available in the park, Badlands invites horse owners to explore the Badlands Wilderness Area, consisti",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/07275D53-EDCA-EF11-7CE37A9649F8E390.jpg",
+    "imageAlt": "a green rolling prairie melts into a pale blue, cloudy sky.",
+    "coordinates": {
+      "lat": 43.68584846,
+      "lng": -102.482942
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-40",
+    "name": "Explore Mountain Vista & Savage River",
+    "parkName": "Denali National Park & Preserve",
+    "parkCode": "dena",
+    "location": "Denali National Park & Preserve, AK",
+    "state": "AK",
+    "description": "While most of Denali’s sole road is restricted just to bus traffic, anybody can drive out to Mountain Vista and Savage River. Located about 15 miles inside the park, the area is scenic, featuring seve",
+    "difficulty": "easy",
+    "length": "15 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/A0780688-1DD8-B71B-0B394F52A830E344.jpg",
+    "imageAlt": "a shallow river flowing between mountains",
+    "coordinates": {
+      "lat": 63.29777484,
+      "lng": -151.0526568
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-41",
+    "name": "Hike a Short Trail From the Denali Visitor Center",
+    "parkName": "Denali National Park & Preserve",
+    "parkCode": "dena",
+    "location": "Denali National Park & Preserve, AK",
+    "state": "AK",
+    "description": "At 6 million acres in size, Denali is incredibly vast, and hiking is possible almost anywhere in the park. However, there are only a handful of established trails in the park, and here you'll find a f",
+    "difficulty": "easy",
+    "length": "6 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/7C7E1C86-1DD8-B71B-0B442E40AC2BDDC6.jpg",
+    "imageAlt": "a trail leading through a forest of spruce and aspen trees",
+    "coordinates": {
+      "lat": 63.29777484,
+      "lng": -151.0526568
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-42",
+    "name": "Discover the Boreal Forest: Identify Plants While Hiking in Denali",
+    "parkName": "Denali National Park & Preserve",
+    "parkCode": "dena",
+    "location": "Denali National Park & Preserve, AK",
+    "state": "AK",
+    "description": "Denali is home to a beautiful variety of plant species, from tall Aspen trees to short Moss campion. With a diversity of habitat types that support water-loving to drought-tolerant plants, Denali is a",
+    "difficulty": "easy",
+    "length": "4 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/A31A1582-CB9F-DB2A-AFAA0FB6DBEE37A0.jpg",
+    "imageAlt": "woman looking at her smart phone and a plant on a trail",
+    "coordinates": {
+      "lat": 63.29777484,
+      "lng": -151.0526568
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-43",
+    "name": "Kūpinaʻi Pali (Waldron Ledge)",
+    "parkName": "Hawaiʻi Volcanoes National Park",
+    "parkCode": "havo",
+    "location": "Hawaiʻi Volcanoes National Park, HI",
+    "state": "HI",
+    "description": "Walk along an old road damaged by an earthquake in 1983 and get panoramic views of Kaluapele",
+    "difficulty": "easy",
+    "length": "45 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/736BB362-9BB1-2A0C-463A2BCC4BE56FD3.jpg",
+    "imageAlt": "Overlook into a volcanic crater with trees in the foreground",
+    "coordinates": {
+      "lat": 19.428103017574713,
+      "lng": -155.2576958459866
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-44",
+    "name": "Devastation Trail",
+    "parkName": "Hawaiʻi Volcanoes National Park",
+    "parkCode": "havo",
+    "location": "Hawaiʻi Volcanoes National Park, HI",
+    "state": "HI",
+    "description": "Stroll on a paved path through a recovering landscape that was buried by falling cinder from the 1959 Kīlauea Iki eruption.",
+    "difficulty": "easy",
+    "length": "1 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/9BFF97D4-D9B4-D032-1589AB1A26D2874C.jpg",
+    "imageAlt": "Two people holding hands on a paved path through a cinder-covered landscape",
+    "coordinates": {
+      "lat": 19.411795,
+      "lng": -155.249985
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-45",
+    "name": "Nāhuku Lava Tube Trail",
+    "parkName": "Hawaiʻi Volcanoes National Park",
+    "parkCode": "havo",
+    "location": "Hawaiʻi Volcanoes National Park, HI",
+    "state": "HI",
+    "description": "Walk through lush rainforest and see a cave where a river of lava flowed 500 years ago.",
+    "difficulty": "easy",
+    "length": "1.5 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/62685758-93CB-293B-334C711056A3D236.jpg",
+    "imageAlt": "lava tube lit by orange electric light",
+    "coordinates": {
+      "lat": 19.413698230070537,
+      "lng": -155.23901108746665
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-46",
+    "name": "Hike Cholla Cactus Garden",
+    "parkName": "Joshua Tree National Park",
+    "parkCode": "jotr",
+    "location": "Joshua Tree National Park, CA",
+    "state": "CA",
+    "description": "An easy quarter mile hike through a cholla patch along Pinto Basin Road.",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/CF2E946E-08F9-52F6-E0691F0DEF4EBE00.jpg",
+    "imageAlt": "A person walking a sidewalk next to a fence in front of chollas with the sun setting over mountains.",
+    "coordinates": {
+      "lat": 33.925252,
+      "lng": -115.928882
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-47",
+    "name": "Hike Skull Rock",
+    "parkName": "Joshua Tree National Park",
+    "parkCode": "jotr",
+    "location": "Joshua Tree National Park, CA",
+    "state": "CA",
+    "description": "A relatively flat, 1.7-mile loop trail. Hike through the large, granite boulder fields around the Jumbo Rocks area, including one near Park Boulevard that closely resembles a Skull. ",
+    "difficulty": "easy",
+    "length": "6 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/1490D656-E420-03B2-BDB2E161E86802EA.jpg",
+    "imageAlt": "A hiker walking on a dirt trail with rocks in the background",
+    "coordinates": {
+      "lat": 33.9977835,
+      "lng": -116.059446
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-48",
+    "name": "Hike Boy Scout Trail",
+    "parkName": "Joshua Tree National Park",
+    "parkCode": "jotr",
+    "location": "Joshua Tree National Park, CA",
+    "state": "CA",
+    "description": "Explore the Wonderland of Rocks on the Boy Scout Trail.",
+    "difficulty": "easy",
+    "length": "8 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/90C70D6F-F261-1861-629DF4248B67F503.jpg",
+    "imageAlt": "Hikers on a dirt trail going between Joshua trees and shrubs heading towards a rock formation.",
+    "coordinates": {
+      "lat": 34.041088,
+      "lng": -116.185784
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-49",
+    "name": "Trail Run Grandview Rim Trail",
+    "parkName": "New River Gorge National Park & Preserve",
+    "parkCode": "neri",
+    "location": "New River Gorge National Park & Preserve, WV",
+    "state": "WV",
+    "description": "Trail run that is 3.1 miles. This is an out and back route that is on different compositions. It is mostly a dirt path with varying degrees of hardness. In fall, when leaves are falling, be aware that",
+    "difficulty": "easy",
+    "length": "3.1 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/0F3A273B-DCB2-E28F-B26211C2C021FCDE.jpg",
+    "imageAlt": "Colored photo looking down into the gorge at a bend in the New River",
+    "coordinates": {
+      "lat": 37.83142082820347,
+      "lng": -81.06275081634521
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-50",
+    "name": "Trail run at Endless Wall",
+    "parkName": "New River Gorge National Park & Preserve",
+    "parkCode": "neri",
+    "location": "New River Gorge National Park & Preserve, WV",
+    "state": "WV",
+    "description": "Endless Wall Trail is and excellent place for a trail run but due to the volume of other hikers, this trail runner would recommend that this be an early morning location. The trail is easy to moderate",
+    "difficulty": "moderate",
+    "length": "3.0 mi",
+    "elevationGain": "500-1,500 ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/43D4A47B-907E-96A0-F97883FC3E613DC0.jpg",
+    "imageAlt": "Views of the rock face from Endless Wall Trail",
+    "coordinates": {
+      "lat": 38.05964823798514,
+      "lng": -81.04940414428711
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-51",
+    "name": "Trail Run or hike the Little Laurel Trail",
+    "parkName": "New River Gorge National Park & Preserve",
+    "parkCode": "neri",
+    "location": "New River Gorge National Park & Preserve, WV",
+    "state": "WV",
+    "description": "The 4.0 mile roundtrip trail run or hike is strenuous. The terrain is crushed rock for most of the trail, but there are a few areas that the terrain can be a bit uneven. If you start at the trailhead ",
+    "difficulty": "hard",
+    "length": "4.0 mi",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/AF7AD2B4-0ED9-6EAF-8E085B2FCDCA0A92.jpg",
+    "imageAlt": "View of the beginning of the Little Laurel Trail from the Grandview location. The trail is wooded.",
+    "coordinates": {
+      "lat": 37.837343801929194,
+      "lng": -81.06985330581665
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-52",
+    "name": "Hike Rim Rock Trail - South Rim",
+    "parkName": "Black Canyon Of The Gunnison National Park",
+    "parkCode": "blca",
+    "location": "Black Canyon Of The Gunnison National Park, CO",
+    "state": "CO",
+    "description": "This 1-mile (1.6 km) trail, which meanders along the canyon rim, connects the South Rim Visitor Center to the South Rim Campground.",
+    "difficulty": "easy",
+    "length": "1 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/5435EE2C-0673-CBF0-51E428B3AB629026.jpg",
+    "imageAlt": "Hike the Rim Rock Trail",
+    "coordinates": {
+      "lat": 38.54476964573458,
+      "lng": -107.68863474686691
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-53",
+    "name": "Hike Uplands Trail - South Rim",
+    "parkName": "Black Canyon Of The Gunnison National Park",
+    "parkCode": "blca",
+    "location": "Black Canyon Of The Gunnison National Park, CO",
+    "state": "CO",
+    "description": "This .9-mile (1.4 km) trail links the Rim Rock Trail (near the campground) to the upper Oak Flat Loop Trail near the South Rim Visitor Center.",
+    "difficulty": "easy",
+    "length": "9 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/5364D496-A207-554D-FEC04B7DF5202C4E.jpg",
+    "imageAlt": "Uplands Trail",
+    "coordinates": {
+      "lat": 38.54573203331564,
+      "lng": -107.68827795982361
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-54",
+    "name": "Hike North Vista Trail - North Rim",
+    "parkName": "Black Canyon Of The Gunnison National Park",
+    "parkCode": "blca",
+    "location": "Black Canyon Of The Gunnison National Park, CO",
+    "state": "CO",
+    "description": "Constructed by the Volunteers for Outdoor Colorado, the North Vista Trail offers some of the best scenic views and birding in the park. Difficulty varies from moderate to strenuous based on distance.",
+    "difficulty": "hard",
+    "length": "1.6 mi",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/20F22AD1-C439-CF2E-3591432D22EF2A8F.jpg",
+    "imageAlt": "Green and blueish canyon cliffs with mountains in the background",
+    "coordinates": {
+      "lat": 38.586666107177734,
+      "lng": -107.70500183105469
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-55",
+    "name": "Hiking at Crater Lake National Park",
+    "parkName": "Crater Lake National Park",
+    "parkCode": "crla",
+    "location": "Crater Lake National Park, OR",
+    "state": "OR",
+    "description": "Crater Lake inspires awe. Native Americans witnessed its formation 7,700 years ago, when a violent eruption triggered the collapse of a tall peak. Scientists marvel at its purity—fed by rain and snow,",
+    "difficulty": "moderate",
+    "length": "Varies",
+    "elevationGain": "Varies",
+    "imageUrl": "https://www.nps.gov/common/uploads/structured_data/3C7B227E-1DD8-B71B-0BEECDD24771C381.jpg",
+    "imageAlt": "A view of Crater Lake and Wizard Island",
+    "coordinates": {
+      "lat": 42.94065854,
+      "lng": -122.1338414
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-56",
+    "name": "Explore the Dunes",
+    "parkName": "Great Sand Dunes National Park & Preserve",
+    "parkCode": "grsa",
+    "location": "Great Sand Dunes National Park & Preserve, CO",
+    "state": "CO",
+    "description": "Explore the tallest dunes in North America! The centerpiece of Great Sand Dunes National Park and Preserve is the 30-square-mile (78-square-km) dunefield, featuring the tallest dunes in North America.",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/C9417ECF-B302-E323-29053A24637482AE.jpg",
+    "imageAlt": "Girl with backpack standing on dunes at sunset",
+    "coordinates": {
+      "lat": 37.746490538806164,
+      "lng": -105.52558178308107
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-57",
+    "name": "Hike Montville Nature Trail or Mosca Pass Trail",
+    "parkName": "Great Sand Dunes National Park & Preserve",
+    "parkCode": "grsa",
+    "location": "Great Sand Dunes National Park & Preserve, CO",
+    "state": "CO",
+    "description": "Just above the dunefield are montane woodlands of pinon and ponderosa pine, subalpine aspen and conifer forests, alpine lakes and rugged mountains over 13,000 feet (4,000 m) in elevation. The easiest ",
+    "difficulty": "easy",
+    "length": "0.5 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/064D93E7-AF79-DADF-3FF366A40EBC55D4.jpg",
+    "imageAlt": "Two girls hiking on a forested trail",
+    "coordinates": {
+      "lat": 37.734199,
+      "lng": -105.508354
+    },
+    "activities": [
+      "Front-Country Hiking"
+    ]
+  },
+  {
+    "id": "trail-58",
+    "name": "Hiking at Mesa Verde National Park",
+    "parkName": "Mesa Verde National Park",
+    "parkCode": "meve",
+    "location": "Mesa Verde National Park, CO",
+    "state": "CO",
+    "description": "For over 700 years, the Ancestral Pueblo people built thriving communities on the mesas and in the cliffs of Mesa Verde. Today, the park protects the rich cultural heritage of 27 Pueblos and Tribes an",
+    "difficulty": "moderate",
+    "length": "Varies",
+    "elevationGain": "Varies",
+    "imageUrl": "https://www.nps.gov/common/uploads/structured_data/3C7C0089-1DD8-B71B-0BC397BA671C0616.jpg",
+    "imageAlt": "Large cliff dwelling in cliff alcove",
+    "coordinates": {
+      "lat": 37.23908345,
+      "lng": -108.4624032
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-59",
+    "name": "Walk the Stout Memorial Grove Trail",
+    "parkName": "Redwood National and State Parks",
+    "parkCode": "redw",
+    "location": "Redwood National and State Parks, CA",
+    "state": "CA",
+    "description": "A majestic grove of redwoods next to the Smith River in the northern part of the park. This trail requires some planning about how you will access it. Hours can be spent on a summer's day relaxing on ",
+    "difficulty": "easy",
+    "length": "0.5 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/57871549-979F-50D9-844B7BEFF4668533.jpg",
+    "imageAlt": "A Short Walk For The Adventurous",
+    "coordinates": {
+      "lat": 41.37237268,
+      "lng": -124.0318129
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-60",
+    "name": "Walk the Fern Canyon Loop Trail",
+    "parkName": "Redwood National and State Parks",
+    "parkCode": "redw",
+    "location": "Redwood National and State Parks, CA",
+    "state": "CA",
+    "description": "A unique, beautiful, and popular location in the park. Getting here does require some planning, reservations are required May 15th through September 15th (available online), there are two (2) stream c",
+    "difficulty": "easy",
+    "length": "45 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/18B6EE9C-B0C1-701E-ECBBCA286EB90662.jpg",
+    "imageAlt": "A cobbled stream cuts into fern covered walls.",
+    "coordinates": {
+      "lat": 41.40062737869896,
+      "lng": -124.06586814568101
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-61",
+    "name": "Stroll the Simpson-Reed Trail",
+    "parkName": "Redwood National and State Parks",
+    "parkCode": "redw",
+    "location": "Redwood National and State Parks, CA",
+    "state": "CA",
+    "description": "An easy walk through beautiful old-growth redwood forests in the northern part of the parks. Limited parking, RV's and trailers not permitted.",
+    "difficulty": "easy",
+    "length": "0.8 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/54F9CCB8-C96B-063A-FDC12152B36A3922.jpg",
+    "imageAlt": "A Short Walk in the Northern Part of the Redwoods",
+    "coordinates": {
+      "lat": 41.81250970741672,
+      "lng": -124.10874690882893
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-62",
+    "name": "List of Hiking Trails in Big Bend",
+    "parkName": "Big Bend National Park",
+    "parkCode": "bibe",
+    "location": "Big Bend National Park, TX",
+    "state": "TX",
+    "description": "Hiking trails",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/00BC6D0A-A0BD-C0E4-FFA714CA33685E57.jpg",
+    "imageAlt": "Mule Ears Trail",
+    "coordinates": {
+      "lat": 29.32741408428845,
+      "lng": -103.20556640625
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-63",
+    "name": "See the Rio Grande",
+    "parkName": "Big Bend National Park",
+    "parkCode": "bibe",
+    "location": "Big Bend National Park, TX",
+    "state": "TX",
+    "description": "The Rio Grande is accessible from a number of places in Big Bend National Park, and a variety of hiking trails provide even further opportunities to get up close and personal with our watery border wi",
+    "difficulty": "easy",
+    "length": "100 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/CE09527E-0DB6-2176-B94376D54A55C317.jpg",
+    "imageAlt": "Hot Springs Trail",
+    "coordinates": {
+      "lat": 29.29817767,
+      "lng": -103.2297897
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-64",
+    "name": "Hike the Lost Mine Trail",
+    "parkName": "Big Bend National Park",
+    "parkCode": "bibe",
+    "location": "Big Bend National Park, TX",
+    "state": "TX",
+    "description": "The Lost Mine Trail climbs to the side of Lost Mine Peak, offering spectacular views of Juniper Canyon and the Northeast Rim of the Chisos.",
+    "difficulty": "easy",
+    "length": "2.4 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/1F62FEE7-AD50-0052-46CEC140169A44CD.jpg",
+    "imageAlt": "Enjoying The View",
+    "coordinates": {
+      "lat": 29.27448,
+      "lng": -103.28671
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-65",
+    "name": "Hike the Brandywine Gorge Loop",
+    "parkName": "Cuyahoga Valley National Park",
+    "parkCode": "cuva",
+    "location": "Cuyahoga Valley National Park, OH",
+    "state": "OH",
+    "description": "The Brandywine Gorge Loop circles a deep ravine carved by Brandywine Creek, and provides stunning views of Brandywine Falls along the way. Learn more about hiking this popular trail.",
+    "difficulty": "easy",
+    "length": "1.5 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/92B0B19B-F15B-8DF7-3BAEB971B19869DA.jpg",
+    "imageAlt": "View down through bare trees at a deck overlooking a waterfall cascading into a gorge.",
+    "coordinates": {
+      "lat": 41.26093905,
+      "lng": -81.57116722
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-66",
+    "name": "Hike the Ledges Trail",
+    "parkName": "Cuyahoga Valley National Park",
+    "parkCode": "cuva",
+    "location": "Cuyahoga Valley National Park, OH",
+    "state": "OH",
+    "description": "The Ledges Trail circles a plateau of striking rock formations and provides stunning views along the way. Learn more about hiking this popular trail.",
+    "difficulty": "easy",
+    "length": "3 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/4D4293A3-02F7-D817-38D6D9F6E1CC2AC9.jpg",
+    "imageAlt": "Staircase of rough-hewn gray stones winds between two walls of green moss-covered rock, up to trees.",
+    "coordinates": {
+      "lat": 41.223685528,
+      "lng": -81.510589157
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-67",
+    "name": "Find the Best Fall Colors in Cuyahoga Valley",
+    "parkName": "Cuyahoga Valley National Park",
+    "parkCode": "cuva",
+    "location": "Cuyahoga Valley National Park, OH",
+    "state": "OH",
+    "description": "Leaf peepers, grab your cameras! Here are our tips for where to find Cuyahoga Valley’s best fall colors throughout October.",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/D0C1A2F3-CF95-5F02-C2517A82F7443ACC.jpg",
+    "imageAlt": "Scenic view of red barn with grassy fields in foreground and hillside of colorful leaves behind.",
+    "coordinates": {
+      "lat": 41.26093905,
+      "lng": -81.57116722
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-68",
+    "name": "1966 Hiking Challenge",
+    "parkName": "Indiana Dunes National Park",
+    "parkCode": "indu",
+    "location": "Indiana Dunes National Park, IN",
+    "state": "IN",
+    "description": "The 1966 Hiking Challenge is comprised of 19 hikes that cover 66 miles of trail in the park, celebrating the park’s founding in 1966. We will offer 19 weekly ranger led hikes every Saturday at 8:00 am",
+    "difficulty": "easy",
+    "length": "66 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/087E2C41-F06E-0089-49DD6819F09274E6.jpg",
+    "imageAlt": "1966 Hiking Challenge Banner",
+    "coordinates": {
+      "lat": 41.63765525,
+      "lng": -87.09647445
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-69",
+    "name": "Diana Dunes Dare",
+    "parkName": "Indiana Dunes National Park",
+    "parkCode": "indu",
+    "location": "Indiana Dunes National Park, IN",
+    "state": "IN",
+    "description": "What is the Diana Dunes Dare? It is a hiking challenge! It is a ghost story re-told! We are daring you to be like dune advocate Alice Mabel Gray, also known as Diana of the Dunes. She hiked and lived ",
+    "difficulty": "easy",
+    "length": "36 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/81809135-A98E-72C5-0F061F514EFCAD04.jpg",
+    "imageAlt": "A visitor about to start the Diana's Dare",
+    "coordinates": {
+      "lat": 41.622934,
+      "lng": -87.207747
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-70",
+    "name": "Hiking Indiana Dunes",
+    "parkName": "Indiana Dunes National Park",
+    "parkCode": "indu",
+    "location": "Indiana Dunes National Park, IN",
+    "state": "IN",
+    "description": "Indiana Dunes is home to one of the most biologically diverse habitats in the nation. Hiking is a great way to explore these fascinating landscape. Traverse over 50 miles of trails that lead you throu",
+    "difficulty": "easy",
+    "length": "50 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/CA1FE555-02EC-BBFF-FBFC0AD1938E74A0.jpg",
+    "imageAlt": "Hiking the Dunes",
+    "coordinates": {
+      "lat": 41.63765525,
+      "lng": -87.09647445
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-71",
+    "name": "Hike Bench Trail to South Wilderness Trail",
+    "parkName": "Pinnacles National Park",
+    "parkCode": "pinn",
+    "location": "Pinnacles National Park, CA",
+    "state": "CA",
+    "description": "East Side Trails, Moderate Hikes",
+    "difficulty": "moderate",
+    "length": "Varies",
+    "elevationGain": "500-1,500 ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/C303DFB2-A252-33BD-E724002610E2D728.jpg",
+    "imageAlt": "Narrow dirt trail in open grassland leading into oak woodlands",
+    "coordinates": {
+      "lat": 36.4883767288,
+      "lng": -121.151582172
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-72",
+    "name": "Hike Bench Trail to Balconies Cave Trail",
+    "parkName": "Pinnacles National Park",
+    "parkCode": "pinn",
+    "location": "Pinnacles National Park, CA",
+    "state": "CA",
+    "description": "East Side Trails, Moderate Hikes, Cave Hike",
+    "difficulty": "moderate",
+    "length": "6+ mi",
+    "elevationGain": "500-1,500 ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/96EF5AF5-9935-13CC-65A78AF642206DE7.jpg",
+    "imageAlt": "View of a wide hard packed dirt trail in an open area shaded by oak trees",
+    "coordinates": {
+      "lat": 36.4883767288,
+      "lng": -121.151582172
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-73",
+    "name": "Hike Bench Trail to Sycamore Trail",
+    "parkName": "Pinnacles National Park",
+    "parkCode": "pinn",
+    "location": "Pinnacles National Park, CA",
+    "state": "CA",
+    "description": "East Side Trails, Moderate Hikes",
+    "difficulty": "moderate",
+    "length": "Varies",
+    "elevationGain": "500-1,500 ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/96B03BB8-922E-BB9F-54CFC3423AE6B311.jpg",
+    "imageAlt": "Wooden bridge crossing over a creek to a dirt trail winding around a green hillside",
+    "coordinates": {
+      "lat": 36.4883767288,
+      "lng": -121.151582172
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-74",
+    "name": "Johnny Horn Trail",
+    "parkName": "Virgin Islands National Park",
+    "parkCode": "viis",
+    "location": "Virgin Islands National Park, VI",
+    "state": "VI",
+    "description": "This strenuous trail leads to the remains of some beautiful stone historic sites and incredible views.",
+    "difficulty": "hard",
+    "length": "1.8 mi",
+    "elevationGain": "1,500+ ft",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/C836C4AE-DF27-AE4F-8521E3660DD54BE5.jpg",
+    "imageAlt": "Distant boats dot turquoise water of varying shades on a brilliantly sunny day.",
+    "coordinates": {
+      "lat": 18.365155,
+      "lng": -64.720476
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-75",
+    "name": "L'Esperance Trail",
+    "parkName": "Virgin Islands National Park",
+    "parkCode": "viis",
+    "location": "Virgin Islands National Park, VI",
+    "state": "VI",
+    "description": "L'Esperance Trail follows a historic Danish road passing ruins of some of the earliest plantations established on St. John. View the island's only baobab, a sacred tree species that was brought to the",
+    "difficulty": "easy",
+    "length": "2.6 mi",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/DFE91101-0F69-A1BB-713ED83C814582C8.jpg",
+    "imageAlt": "L'Esperance Trail",
+    "coordinates": {
+      "lat": 18.34261170386951,
+      "lng": -64.75914903297179
+    },
+    "activities": [
+      "Hiking"
+    ]
+  },
+  {
+    "id": "trail-76",
+    "name": "Francis Bay Trail",
+    "parkName": "Virgin Islands National Park",
+    "parkCode": "viis",
+    "location": "Virgin Islands National Park, VI",
+    "state": "VI",
+    "description": "Francis Bay Trail starts at the Francis Bay Sugar Factory. It continues past the Mary's Point Estate house and around a salt pond. The dry tropical forest and salt pond provide an excellent opportunit",
+    "difficulty": "easy",
+    "length": "Varies",
+    "elevationGain": "Minimal",
+    "imageUrl": "https://www.nps.gov/common/uploads/cropped_image/0B6EC9A5-1DD8-B71B-0B1D3877760AA740.jpg",
+    "imageAlt": "Frances Bay Board Walk and viewing platform",
+    "coordinates": {
+      "lat": 18.36244,
+      "lng": -64.74268
+    },
+    "activities": [
+      "Hiking"
+    ]
+  }
+]
