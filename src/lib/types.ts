@@ -1,3 +1,9 @@
+export type TrailImage = {
+  url: string;
+  alt: string;
+  caption: string;
+};
+
 export type Trail = {
   id: string;
   name: string;
@@ -11,6 +17,7 @@ export type Trail = {
   elevationGain: string;
   imageUrl: string;
   imageAlt: string;
+  images: TrailImage[];
   coordinates: {
     lat: number;
     lng: number;

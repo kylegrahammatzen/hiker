@@ -1,5 +1,5 @@
 import { join } from "path";
-import type { Trail } from "../lib/types";
+import type { Trail, TrailImage } from "../src/lib/types";
 
 const NPS_API_KEY = process.env.NPS_API_KEY ?? "DEMO_KEY";
 const NPS_BASE = "https://developer.nps.gov/api/v1";
@@ -45,11 +45,25 @@ type NPSResponse<T> = {
   data: T[];
 };
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 64);
+}
+
 const HIKING_PARKS = [
+  // Original 30
   "yose", "grca", "zion", "romo", "grsm", "glac", "shen", "acad",
   "olym", "mora", "seki", "brca", "arch", "cany", "grte", "dena",
   "jotr", "havo", "neri", "badl", "grsa", "meve", "blca", "crla",
   "redw", "pinn", "indu", "cuva", "viis", "bibe",
+  // Additional parks
+  "yell", "ever", "bisc", "care", "cave", "chis", "cong", "deva",
+  "drto", "gaar", "jeff", "katm", "kefj", "kova", "lacl", "lavo",
+  "maca", "noca", "pefo", "sagu", "thro", "wica", "wrst", "band",
+  "gumo", "grba", "hosp", "isle", "voya", "cuga",
 ] as const;
 
 function estimateDifficulty(
@@ -155,8 +169,29 @@ function isHikingActivity(activity: NPSActivity): boolean {
   );
 }
 
+function collectImages(
+  hikeImages: NPSImage[],
+  parkImages: NPSImage[],
+  fallbackAlt: string
+): { images: TrailImage[]; imageUrl: string; imageAlt: string } {
+  const seen = new Set<string>();
+  const images: TrailImage[] = [];
+
+  for (const img of [...hikeImages, ...parkImages]) {
+    if (!img.url || seen.has(img.url)) continue;
+    seen.add(img.url);
+    images.push({ url: img.url, alt: img.altText || fallbackAlt, caption: img.caption || "" });
+    if (images.length >= 5) break;
+  }
+
+  return {
+    images,
+    imageUrl: images[0]?.url ?? "/images/trails/default.jpg",
+    imageAlt: images[0]?.alt ?? fallbackAlt,
+  };
+}
+
 function buildTrailFromHike(
-  id: number,
   hike: NPSThingToDo,
   park: NPSPark
 ): Trail | null {
@@ -169,8 +204,14 @@ function buildTrailFromHike(
 
   if (isNaN(lat) || isNaN(lng)) return null;
 
+  const { images, imageUrl, imageAlt } = collectImages(
+    hike.images ?? [],
+    park.images ?? [],
+    hike.title
+  );
+
   return {
-    id: `trail-${id}`,
+    id: `${park.parkCode}-${slugify(hike.title)}`,
     name: hike.title,
     parkName: park.fullName,
     parkCode: park.parkCode,
@@ -183,27 +224,28 @@ function buildTrailFromHike(
       hike.duration ?? ""
     ),
     elevationGain: estimateElevation(hike.shortDescription),
-    imageUrl:
-      hike.images?.[0]?.url ??
-      park.images?.[0]?.url ??
-      "/images/trails/default.jpg",
-    imageAlt:
-      hike.images?.[0]?.altText ??
-      park.images?.[0]?.altText ??
-      hike.title,
+    imageUrl,
+    imageAlt,
+    images,
     coordinates: { lat, lng },
     activities: hike.activities.map((a) => a.name),
   };
 }
 
-function buildTrailFromPark(id: number, park: NPSPark): Trail | null {
+function buildTrailFromPark(park: NPSPark): Trail | null {
   const lat = parseFloat(park.latitude);
   const lng = parseFloat(park.longitude);
 
   if (isNaN(lat) || isNaN(lng)) return null;
 
+  const { images, imageUrl, imageAlt } = collectImages(
+    [],
+    park.images ?? [],
+    park.fullName
+  );
+
   return {
-    id: `trail-${id}`,
+    id: `${park.parkCode}-hiking`,
     name: `Hiking at ${park.fullName}`,
     parkName: park.fullName,
     parkCode: park.parkCode,
@@ -213,8 +255,9 @@ function buildTrailFromPark(id: number, park: NPSPark): Trail | null {
     difficulty: "moderate",
     length: "Varies",
     elevationGain: "Varies",
-    imageUrl: park.images?.[0]?.url ?? "/images/trails/default.jpg",
-    imageAlt: park.images?.[0]?.altText ?? park.fullName,
+    imageUrl,
+    imageAlt,
+    images,
     coordinates: { lat, lng },
     activities: ["Hiking"],
   };
@@ -225,8 +268,8 @@ async function main() {
   const parks = await fetchParks();
   console.log(`Got ${parks.length} parks`);
 
+  const seen = new Set<string>();
   const trails: Trail[] = [];
-  let trailId = 0;
 
   for (const park of parks) {
     console.log(`Fetching things to do for ${park.fullName}...`);
@@ -238,22 +281,28 @@ async function main() {
     );
 
     if (hikingThings.length > 0) {
-      for (const hike of hikingThings.slice(0, 3)) {
-        const trail = buildTrailFromHike(++trailId, hike, park);
-        if (trail) trails.push(trail);
+      for (const hike of hikingThings.slice(0, 10)) {
+        const trail = buildTrailFromHike(hike, park);
+        if (trail && !seen.has(trail.id)) {
+          seen.add(trail.id);
+          trails.push(trail);
+        }
       }
     } else {
       const hasHiking = park.activities.some(isHikingActivity);
       if (hasHiking) {
-        const trail = buildTrailFromPark(++trailId, park);
-        if (trail) trails.push(trail);
+        const trail = buildTrailFromPark(park);
+        if (trail && !seen.has(trail.id)) {
+          seen.add(trail.id);
+          trails.push(trail);
+        }
       }
     }
   }
 
   console.log(`\nTotal trails collected: ${trails.length}`);
 
-  const outputPath = join(import.meta.dir, "..", "data", "trails.json");
+  const outputPath = join(import.meta.dir, "..", "src", "data", "trails.json");
   await Bun.write(outputPath, JSON.stringify(trails, null, 2));
   console.log(`Written to ${outputPath}`);
 }
