@@ -1,19 +1,50 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Trail } from "@/lib/types";
-import { useTrailStore } from "@/lib/store";
+import { useSelectedTrailId, useResetSignal, useFocusedParkCode, trailActions } from "@/lib/store";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type MapViewProps = {
   trails: Trail[];
+  theme?: string;
+  initialParkCode?: string | null;
 };
 
-const STADIA_OUTDOORS = "https://tiles.stadiamaps.com/styles/outdoors.json";
+export type MapViewHandle = {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetNorth: () => void;
+  getBearing: () => number;
+  isAtDefaultView: () => boolean;
+};
+
+const STADIA_SATELLITE = "https://tiles.stadiamaps.com/styles/alidade_satellite.json";
 
 export const DEFAULT_CENTER: [number, number] = [-98.5, 39.8];
 export const DEFAULT_ZOOM = 4;
+
+const LIGHT_COLORS = {
+  clusterSteps: ["#16a34a", "#0d9488", "#0284c7"] as [string, string, string],
+  clusterStroke: "#ffffff",
+  clusterText: "#ffffff",
+  unclustered: "#16a34a",
+  unclusteredStroke: "#ffffff",
+  selected: "#dc2626",
+  selectedStroke: "#ffffff",
+};
+
+const DARK_COLORS = {
+  clusterSteps: ["#4ade80", "#2dd4bf", "#38bdf8"] as [string, string, string],
+  clusterStroke: "rgba(0,0,0,0.4)",
+  clusterText: "#000000",
+  unclustered: "#4ade80",
+  unclusteredStroke: "rgba(0,0,0,0.4)",
+  selected: "#f87171",
+  selectedStroke: "rgba(0,0,0,0.4)",
+};
 
 function trailsToGeoJSON(trails: Trail[]): GeoJSON.FeatureCollection {
   return {
@@ -24,6 +55,7 @@ function trailsToGeoJSON(trails: Trail[]): GeoJSON.FeatureCollection {
         id: trail.id,
         name: trail.name,
         parkName: trail.parkName,
+        parkCode: trail.parkCode,
         difficulty: trail.difficulty,
         length: trail.length,
         elevationGain: trail.elevationGain,
@@ -36,32 +68,76 @@ function trailsToGeoJSON(trails: Trail[]): GeoJSON.FeatureCollection {
   };
 }
 
-export default function MapView({ trails }: MapViewProps) {
+function applyThemeColors(map: maplibregl.Map, isDark: boolean) {
+  const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
+  try {
+    map.setPaintProperty("trails-clusters", "circle-color", [
+      "step",
+      ["get", "point_count"],
+      colors.clusterSteps[0],
+      10, colors.clusterSteps[1],
+      25, colors.clusterSteps[2],
+    ]);
+    map.setPaintProperty("trails-clusters", "circle-stroke-color", colors.clusterStroke);
+    map.setPaintProperty("trails-cluster-count", "text-color", colors.clusterText);
+    map.setPaintProperty("trails-unclustered", "circle-color", colors.unclustered);
+    map.setPaintProperty("trails-unclustered", "circle-stroke-color", colors.unclusteredStroke);
+    map.setPaintProperty("trails-selected", "circle-color", colors.selected);
+    map.setPaintProperty("trails-selected", "circle-stroke-color", colors.selectedStroke);
+  } catch {
+    // Layers may not exist yet
+  }
+}
+
+const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView({ trails, theme, initialParkCode }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const prevKeyRef = useRef("");
-  const selectedId = useTrailStore((s) => s.selectedTrailId);
-  const resetSignal = useTrailStore((s) => s.resetSignal);
-  const setSelected = useTrailStore((s) => s.setSelectedTrailId);
-  const setVisibleTrailIds = useTrailStore((s) => s.setVisibleTrailIds);
+  const [loaded, setLoaded] = useState(false);
+  const [bearing, setBearing] = useState(0);
+  const selectedId = useSelectedTrailId();
+  const resetSignal = useResetSignal();
+  const focusedParkCode = useFocusedParkCode();
+
+  const isDark = theme === "dark";
+
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => mapRef.current?.zoomIn({ duration: 300 }),
+    zoomOut: () => mapRef.current?.zoomOut({ duration: 300 }),
+    resetNorth: () => mapRef.current?.easeTo({ bearing: 0, duration: 300 }),
+    getBearing: () => bearing,
+    isAtDefaultView: () => {
+      const map = mapRef.current;
+      if (!map) return true;
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      const bearing = map.getBearing();
+      const centerMatch = 
+        Math.abs(center.lng - DEFAULT_CENTER[0]) < 0.1 && 
+        Math.abs(center.lat - DEFAULT_CENTER[1]) < 0.1;
+      const zoomMatch = Math.abs(zoom - DEFAULT_ZOOM) < 0.5;
+      const bearingMatch = Math.abs(bearing) < 1;
+      return centerMatch && zoomMatch && bearingMatch;
+    },
+  }));
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
+    const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
+
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: STADIA_OUTDOORS,
+      style: STADIA_SATELLITE,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
-      attributionControl: {},
+      attributionControl: false,
       fadeDuration: 0,
     });
 
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
-    map.addControl(new maplibregl.ScaleControl(), "bottom-left");
+    map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-left");
 
-    // Only show trails that are actually visible as individual dots (not inside clusters)
     function syncVisibleTrails() {
       if (!map.isStyleLoaded()) return;
       try {
@@ -80,7 +156,7 @@ export default function MapView({ trails }: MapViewProps) {
         const key = ids.length + ":" + (ids[0] ?? "") + (ids[ids.length - 1] ?? "");
         if (key !== prevKeyRef.current) {
           prevKeyRef.current = key;
-          setVisibleTrailIds(ids);
+          trailActions.setVisibleTrailIds(ids);
         }
       } catch {
         // Layer may not exist yet
@@ -88,6 +164,9 @@ export default function MapView({ trails }: MapViewProps) {
     }
 
     map.on("load", () => {
+      setLoaded(true);
+      trailActions.setMapLoaded();
+
       map.addSource("trails", {
         type: "geojson",
         data: trailsToGeoJSON(trails),
@@ -105,9 +184,9 @@ export default function MapView({ trails }: MapViewProps) {
           "circle-color": [
             "step",
             ["get", "point_count"],
-            "#16a34a",
-            10, "#0d9488",
-            25, "#0284c7",
+            colors.clusterSteps[0],
+            10, colors.clusterSteps[1],
+            25, colors.clusterSteps[2],
           ],
           "circle-radius": [
             "step",
@@ -116,7 +195,7 @@ export default function MapView({ trails }: MapViewProps) {
             10, 16,
             25, 20,
           ],
-          "circle-stroke-color": "#ffffff",
+          "circle-stroke-color": colors.clusterStroke,
           "circle-stroke-width": 1.5,
           "circle-radius-transition": { duration: 200, delay: 0 },
           "circle-opacity-transition": { duration: 200, delay: 0 },
@@ -136,7 +215,7 @@ export default function MapView({ trails }: MapViewProps) {
           "text-ignore-placement": true,
         },
         paint: {
-          "text-color": "#ffffff",
+          "text-color": colors.clusterText,
         },
       });
 
@@ -147,8 +226,8 @@ export default function MapView({ trails }: MapViewProps) {
         filter: ["!", ["has", "point_count"]],
         paint: {
           "circle-radius": 6,
-          "circle-color": "#16a34a",
-          "circle-stroke-color": "#ffffff",
+          "circle-color": colors.unclustered,
+          "circle-stroke-color": colors.unclusteredStroke,
           "circle-stroke-width": 2,
         },
       });
@@ -160,8 +239,8 @@ export default function MapView({ trails }: MapViewProps) {
         filter: ["==", ["get", "id"], ""],
         paint: {
           "circle-radius": 10,
-          "circle-color": "#dc2626",
-          "circle-stroke-color": "#ffffff",
+          "circle-color": colors.selected,
+          "circle-stroke-color": colors.selectedStroke,
           "circle-stroke-width": 2,
         },
       });
@@ -169,7 +248,6 @@ export default function MapView({ trails }: MapViewProps) {
       map.on("click", "trails-clusters", async (e) => {
         const feature = e.features?.[0];
         if (!feature || feature.geometry.type !== "Point") return;
-
         const clusterId = feature.properties.cluster_id as number;
         const source = map.getSource("trails") as maplibregl.GeoJSONSource;
         const zoom = await source.getClusterExpansionZoom(clusterId);
@@ -184,10 +262,8 @@ export default function MapView({ trails }: MapViewProps) {
         map.getCanvas().style.cursor = "pointer";
         const feature = e.features?.[0];
         if (!feature || feature.geometry.type !== "Point") return;
-
         const coords = feature.geometry.coordinates as [number, number];
         const props = feature.properties;
-
         popupRef.current?.remove();
         popupRef.current = new maplibregl.Popup({
           offset: 12,
@@ -219,13 +295,14 @@ export default function MapView({ trails }: MapViewProps) {
       map.on("click", "trails-unclustered", (e) => {
         const feature = e.features?.[0];
         if (!feature) return;
-        setSelected(feature.properties.id);
+        trailActions.setSelectedTrailId(feature.properties.id);
       });
 
       syncVisibleTrails();
     });
 
     map.on("moveend", syncVisibleTrails);
+    map.on("rotate", () => setBearing(map.getBearing()));
 
     mapRef.current = map;
 
@@ -233,9 +310,14 @@ export default function MapView({ trails }: MapViewProps) {
       map.remove();
       mapRef.current = null;
     };
-    // trails is static data loaded once from JSON, callbacks are stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    applyThemeColors(map, isDark);
+  }, [isDark, loaded]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -243,7 +325,6 @@ export default function MapView({ trails }: MapViewProps) {
 
     if (selectedId) {
       map.setFilter("trails-selected", ["==", ["get", "id"], selectedId]);
-
       const trail = trails.find((t) => t.id === selectedId);
       if (trail) {
         map.flyTo({
@@ -254,18 +335,12 @@ export default function MapView({ trails }: MapViewProps) {
       }
     } else {
       map.setFilter("trails-selected", ["==", ["get", "id"], ""]);
-      map.flyTo({
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
-        duration: 1500,
-      });
     }
   }, [selectedId, trails]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || resetSignal === 0) return;
-
     map.flyTo({
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
@@ -273,5 +348,79 @@ export default function MapView({ trails }: MapViewProps) {
     });
   }, [resetSignal]);
 
-  return <div ref={mapContainer} className="h-full w-full" />;
-}
+  useEffect(() => {
+    if (!loaded || !initialParkCode) return;
+    
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    
+    const parkTrails = trails.filter((t) => t.parkCode === initialParkCode);
+    if (parkTrails.length === 0) return;
+
+    const lats = parkTrails.map((t) => t.coordinates.lat);
+    const lngs = parkTrails.map((t) => t.coordinates.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const centerLng = (minLng + maxLng) / 2;
+    const centerLat = (minLat + maxLat) / 2;
+
+    const latDiff = maxLat - minLat;
+    const lngDiff = maxLng - minLng;
+    const maxDiff = Math.max(latDiff, lngDiff);
+    const zoom = maxDiff > 0 ? Math.max(8, 11 - Math.log2(maxDiff + 0.1)) : 10;
+
+    map.flyTo({
+      center: [centerLng, centerLat],
+      zoom,
+      duration: 1500,
+    });
+    trailActions.setFocusedParkCode(initialParkCode);
+  }, [loaded, initialParkCode, trails]);
+
+  useEffect(() => {
+    if (!loaded || !focusedParkCode || focusedParkCode === initialParkCode) return;
+    
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    
+    const parkTrails = trails.filter((t) => t.parkCode === focusedParkCode);
+    if (parkTrails.length === 0) return;
+
+    const lats = parkTrails.map((t) => t.coordinates.lat);
+    const lngs = parkTrails.map((t) => t.coordinates.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const centerLng = (minLng + maxLng) / 2;
+    const centerLat = (minLat + maxLat) / 2;
+
+    const latDiff = maxLat - minLat;
+    const lngDiff = maxLng - minLng;
+    const maxDiff = Math.max(latDiff, lngDiff);
+    const zoom = maxDiff > 0 ? Math.max(8, 11 - Math.log2(maxDiff + 0.1)) : 10;
+
+    map.flyTo({
+      center: [centerLng, centerLat],
+      zoom,
+      duration: 1500,
+    });
+  }, [focusedParkCode, loaded, initialParkCode, trails]);
+
+  return (
+    <div className="relative h-full w-full">
+      {!loaded && (
+        <Skeleton className="absolute inset-0 z-0 rounded-none" />
+      )}
+      <div ref={mapContainer} className="h-full w-full outline-none" tabIndex={-1} />
+      <div className="absolute bottom-1 right-1 z-10 text-[10px] text-muted-foreground">
+        &copy; <a href="https://openmaptiles.org/" target="_blank" rel="noopener noreferrer" className="hover:underline">OpenMapTiles</a>
+        {" "}&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="hover:underline">OpenStreetMap</a>
+      </div>
+    </div>
+  );
+});
+
+export default MapView;
