@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mountain, Search, ArrowLeft } from "lucide-react";
+import { MountainsIcon, MagnifyingGlassIcon, ArrowLeftIcon } from "@phosphor-icons/react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,37 +15,37 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { TrailList } from "@/components/trail-list";
 import { TrailDetail } from "@/components/trail-detail";
-import { useTrailStore } from "@/lib/store";
+import { useSelectedTrailId, useMapLoaded, trailActions } from "@/lib/store";
 import type { Trail } from "@/lib/types";
 
 type ParkGroup = {
   parkName: string;
+  parkCode: string;
   trails: Trail[];
 };
 
 function groupByPark(trails: Trail[]): ParkGroup[] {
-  const map = new Map<string, Trail[]>();
+  const map = new Map<string, { parkCode: string; trails: Trail[] }>();
   for (const t of trails) {
-    const list = map.get(t.parkName);
-    if (list) list.push(t);
-    else map.set(t.parkName, [t]);
+    const existing = map.get(t.parkName);
+    if (existing) existing.trails.push(t);
+    else map.set(t.parkName, { parkCode: t.parkCode, trails: [t] });
   }
-  return Array.from(map, ([parkName, trails]) => ({ parkName, trails }));
+  return Array.from(map, ([parkName, { parkCode, trails }]) => ({ parkName, parkCode, trails }));
 }
 
 export function AppSidebar({ trails }: { trails?: Trail[] }) {
   const [search, setSearch] = useState("");
   const allTrails = trails ?? [];
-  const selectedId = useTrailStore((s) => s.selectedTrailId);
-  const setSelected = useTrailStore((s) => s.setSelectedTrailId);
-  const visibleTrailIds = useTrailStore((s) => s.visibleTrailIds);
+  const selectedId = useSelectedTrailId();
+  const mapLoaded = useMapLoaded();
 
   const selectedTrail = allTrails.find((t) => t.id === selectedId);
 
-  const visibleSet = new Set(visibleTrailIds);
   const q = search.toLowerCase();
 
   const filtered = allTrails.filter((t) => {
@@ -54,8 +54,7 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
       t.name.toLowerCase().includes(q) ||
       t.parkName.toLowerCase().includes(q) ||
       t.state.toLowerCase().includes(q);
-    const matchesViewport = visibleSet.size === 0 || visibleSet.has(t.id);
-    return matchesSearch && matchesViewport;
+    return matchesSearch;
   });
 
   const groups = groupByPark(filtered);
@@ -74,15 +73,15 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={() => setSelected(null)}
+                onClick={() => trailActions.setSelectedTrailId(null)}
               >
-                <ArrowLeft className="size-4" />
+                <ArrowLeftIcon className="size-4" />
               </Button>
               <span className="text-sm font-medium truncate">Back to trails</span>
             </>
           ) : (
             <>
-              <Mountain className="size-4 text-primary" />
+              <MountainsIcon className="size-5 text-primary" />
               <span className="text-lg font-semibold tracking-tight">hiker</span>
             </>
           )}
@@ -97,7 +96,7 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             />
             <InputGroupAddon>
-              <Search aria-hidden="true" />
+              <MagnifyingGlassIcon aria-hidden="true" />
             </InputGroupAddon>
           </InputGroup>
         )}
@@ -110,7 +109,7 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
               (t) => t.parkName === selectedTrail.parkName && t.id !== selectedTrail.id
             )}
           />
-        ) : (
+        ) : mapLoaded ? (
           <SidebarGroup>
             <SidebarGroupLabel>
               {filtered.length} trails in {groups.length} {groups.length === 1 ? "park" : "parks"}
@@ -119,6 +118,13 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
               <TrailList groups={groups} />
             </SidebarGroupContent>
           </SidebarGroup>
+        ) : (
+          <div className="flex flex-col gap-2 p-4">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
         )}
       </SidebarContent>
     </Sidebar>
