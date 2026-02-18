@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         pathname: "/common/uploads/**",
       },
     ],
+    minimumCacheTTL: 60,
+  },
+  experimental: {
+    proxyTimeout: 30000,
   },
 };
 

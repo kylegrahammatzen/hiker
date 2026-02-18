@@ -6,15 +6,20 @@ import type { Trail } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { trailActions } from "@/lib/store";
+import { useTrailActions } from "@/lib/trail-context";
 import { cn } from "@/lib/utils";
-import { MapPinIcon, TrendUpIcon, RulerIcon, MountainsIcon, CaretLeftIcon, CaretRightIcon, ShareNetworkIcon, CheckIcon, QuestionIcon } from "@phosphor-icons/react";
-
-type TrailDetailProps = {
-  trail: Trail;
-  nearbyTrails?: Trail[];
-};
+import {
+  MapPinIcon,
+  TrendUpIcon,
+  RulerIcon,
+  MountainsIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  ShareNetworkIcon,
+  CheckIcon,
+  ImageBrokenIcon,
+} from "@phosphor-icons/react";
+import type { TrailImage as TrailImageType } from "@/lib/types";
 
 const difficultyColor = {
   easy: "bg-success/16 text-success-foreground",
@@ -29,66 +34,78 @@ const difficultyLabel = {
 };
 
 function ImageGallery({ trail }: { trail: Trail }) {
-  const images = trail.images?.length > 0
-    ? trail.images
-    : [{ url: trail.imageUrl, alt: trail.imageAlt, caption: "" }];
+  const allImages: TrailImageType[] =
+    trail.images?.length > 0
+      ? trail.images
+      : [{ url: trail.imageUrl, alt: trail.imageAlt, caption: "" }];
+  
+  const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
   const [current, setCurrent] = useState(0);
-  const [failed, setFailed] = useState<Set<number>>(new Set());
   const touchStart = useRef(0);
 
-  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length);
-  const next = () => setCurrent((c) => (c + 1) % images.length);
+  const validImages = allImages.filter((img) => !failedUrls.has(img.url));
+  const hasImages = validImages.length > 0;
+
+  const handleImageError = (url: string) => {
+    setFailedUrls((prev) => new Set(prev).add(url));
+  };
+
+  const prev = () => setCurrent((c) => (c - 1 + validImages.length) % validImages.length);
+  const next = () => setCurrent((c) => (c + 1) % validImages.length);
 
   return (
     <div className="relative w-full">
       <div
         className="relative h-48 w-full overflow-hidden bg-muted"
-        onTouchStart={(e) => { touchStart.current = e.touches[0]!.clientX; }}
+        onTouchStart={(e) => {
+          touchStart.current = e.touches[0]!.clientX;
+        }}
         onTouchEnd={(e) => {
+          if (!hasImages || validImages.length <= 1) return;
           const delta = e.changedTouches[0]!.clientX - touchStart.current;
           if (delta > 50) prev();
           if (delta < -50) next();
         }}
       >
-        {failed.has(current) ? (
-          <Avatar className="size-full rounded-none">
-            <AvatarFallback className="rounded-none bg-muted">
-              <QuestionIcon className="size-12 text-muted-foreground" />
-            </AvatarFallback>
-          </Avatar>
-        ) : (
+        {hasImages ? (
           <Image
-            src={images[current]!.url}
-            alt={images[current]!.alt}
+            key={validImages[current]!.url}
+            src={validImages[current]!.url}
+            alt={validImages[current]!.alt}
             fill
-            sizes="352px"
+            unoptimized
             className="object-cover"
-            priority={current === 0}
-            onError={() => setFailed((prev) => new Set(prev).add(current))}
+            onError={() => handleImageError(validImages[current]!.url)}
           />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <ImageBrokenIcon className="size-12 text-muted-foreground/40" />
+          </div>
         )}
-        {images.length > 1 && (
+        {hasImages && validImages.length > 1 && (
           <>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
             >
-              <CaretLeftIcon className="size-4" />
-            </button>
-            <button
-              type="button"
+              <CaretLeftIcon />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
             >
-              <CaretRightIcon className="size-4" />
-            </button>
+              <CaretRightIcon />
+            </Button>
           </>
         )}
       </div>
-      {images.length > 1 && (
+      {hasImages && validImages.length > 1 && (
         <div className="flex justify-center gap-1 py-2">
-          {images.map((_, i) => (
+          {validImages.map((_, i) => (
             <button
               key={i}
               type="button"
@@ -101,9 +118,9 @@ function ImageGallery({ trail }: { trail: Trail }) {
           ))}
         </div>
       )}
-      {images[current]!.caption && (
+      {hasImages && validImages[current]?.caption && (
         <p className="px-4 pb-2 text-xs text-muted-foreground italic">
-          {images[current]!.caption}
+          {validImages[current]!.caption}
         </p>
       )}
     </div>
@@ -122,83 +139,105 @@ function ShareButton({ trailId }: { trailId: string }) {
   }
 
   return (
-    <Button variant="outline" size="sm" className="h-8 gap-2" onClick={handleShare}>
-      {copied ? <CheckIcon className="size-4" /> : <ShareNetworkIcon className="size-4" />}
+    <Button variant="outline" size="sm" onClick={handleShare}>
+      {copied ? <CheckIcon /> : <ShareNetworkIcon />}
       {copied ? "Copied" : "Share"}
     </Button>
   );
 }
 
-function NearbyTrailImage({ trail }: { trail: Trail }) {
+function NearbyTrailPhoto({ trail }: { trail: Trail }) {
+  const src = trail.images?.[0]?.url ?? trail.imageUrl;
   const [failed, setFailed] = useState(false);
 
-  if (failed) {
-    return (
-      <Avatar className="size-10 shrink-0 rounded">
-        <AvatarFallback className="rounded bg-muted">
-          <QuestionIcon className="size-4 text-muted-foreground" />
-        </AvatarFallback>
-      </Avatar>
-    );
-  }
-
   return (
-    <div className="relative size-10 shrink-0 overflow-hidden rounded">
-      <Image
-        src={trail.imageUrl}
-        alt={trail.imageAlt}
-        fill
-        sizes="40px"
-        className="object-cover"
-        onError={() => setFailed(true)}
-      />
+    <div className="relative size-10 shrink-0 overflow-hidden rounded bg-muted">
+      {failed ? (
+        <div className="flex size-full items-center justify-center">
+          <ImageBrokenIcon className="size-4 text-muted-foreground/40" />
+        </div>
+      ) : (
+        <Image
+          src={src}
+          alt={trail.imageAlt}
+          fill
+          unoptimized
+          className="object-cover"
+          onError={() => setFailed(true)}
+        />
+      )}
     </div>
   );
 }
 
-export function TrailDetail({ trail, nearbyTrails }: TrailDetailProps) {
-  const setSelected = trailActions.setSelectedTrailId;
+function NearbyTrailRow({ trail, onSelect }: { trail: Trail; onSelect: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      className="h-auto w-full justify-start gap-2 rounded-lg px-2 py-2"
+      onClick={onSelect}
+    >
+      <NearbyTrailPhoto trail={trail} />
+      <div className="flex min-w-0 flex-col gap-0">
+        <span className="truncate text-xs font-medium leading-tight">{trail.name}</span>
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Badge variant="ghost" className={cn("text-[10px] px-1 py-0", difficultyColor[trail.difficulty])}>
+            {difficultyLabel[trail.difficulty]}
+          </Badge>
+          {trail.length !== "Varies" && <span>{trail.length}</span>}
+        </span>
+      </div>
+    </Button>
+  );
+}
+
+export function TrailDetail({
+  trail,
+  nearbyTrails,
+}: {
+  trail: Trail;
+  nearbyTrails?: Trail[];
+}) {
+  const actions = useTrailActions();
 
   return (
     <div className="flex flex-col">
       <ImageGallery trail={trail} />
       <div className="flex flex-col gap-4 p-4">
         <div className="flex flex-col gap-2">
-          <div className="flex items-start justify-between gap-2">
-            <h2 className="text-base font-semibold leading-tight">{trail.name}</h2>
-            <ShareButton trailId={trail.id} />
-          </div>
+          <h2 className="text-base font-semibold leading-tight">{trail.name}</h2>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPinIcon className="size-4 shrink-0" />
             <span>{trail.location}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Badge variant="ghost" className={difficultyColor[trail.difficulty]}>
-            {difficultyLabel[trail.difficulty]}
-          </Badge>
-          {trail.length !== "Varies" && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <RulerIcon className="size-4" />
-              <span>{trail.length}</span>
-            </div>
-          )}
-          {trail.elevationGain !== "Varies" && trail.elevationGain !== "Minimal" && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <TrendUpIcon className="size-4" />
-              <span>{trail.elevationGain}</span>
-            </div>
-          )}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-4">
+            <Badge variant="ghost" className={difficultyColor[trail.difficulty]}>
+              {difficultyLabel[trail.difficulty]}
+            </Badge>
+            {trail.length !== "Varies" && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RulerIcon className="size-4" />
+                <span>{trail.length}</span>
+              </div>
+            )}
+            {trail.elevationGain !== "Varies" && trail.elevationGain !== "Minimal" && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <TrendUpIcon className="size-4" />
+                <span>{trail.elevationGain}</span>
+              </div>
+            )}
+          </div>
+          <ShareButton trailId={trail.id} />
         </div>
 
         <Separator />
 
         <div className="flex flex-col gap-2">
           <h3 className="text-sm font-medium">About</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {trail.description}
-          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{trail.description}</p>
         </div>
 
         <Separator />
@@ -232,25 +271,13 @@ export function TrailDetail({ trail, nearbyTrails }: TrailDetailProps) {
             <Separator />
             <div className="flex flex-col gap-2">
               <h3 className="text-sm font-medium">More in {trail.parkName}</h3>
-              <div className="flex flex-col gap-1">
+              <div className="-mx-2 flex flex-col">
                 {nearbyTrails.map((t) => (
-                  <button
+                  <NearbyTrailRow
                     key={t.id}
-                    type="button"
-                    onClick={() => setSelected(t.id)}
-                    className="flex items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent"
-                  >
-                    <NearbyTrailImage trail={t} />
-                    <div className="flex flex-col gap-0 min-w-0">
-                      <span className="text-xs font-medium leading-tight truncate">{t.name}</span>
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <Badge variant="ghost" className={cn("text-[10px] px-1 py-0", difficultyColor[t.difficulty])}>
-                          {difficultyLabel[t.difficulty]}
-                        </Badge>
-                        {t.length !== "Varies" && <span>{t.length}</span>}
-                      </span>
-                    </div>
-                  </button>
+                    trail={t}
+                    onSelect={() => actions.setSelectedTrailId(t.id)}
+                  />
                 ))}
               </div>
             </div>
