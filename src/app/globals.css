@@ -230,3 +230,53 @@
     @apply bg-background text-foreground h-svh overflow-hidden;
   }
 }
+
+/* Map overlay controls: ensure opaque backgrounds over map canvas */
+.map-controls [data-slot="button"],
+.map-controls [data-slot="sidebar-trigger"] {
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 10%) !important;
+}
+
+.map-controls [data-slot="sidebar-trigger"],
+.map-controls [data-slot="button"]:not([data-variant="destructive"]) {
+  background: var(--background) !important;
+}
+
+.map-controls [data-slot="button"][data-variant="destructive"] {
+  background: var(--destructive) !important;
+}
+
+/* MapLibre control overrides */
+.maplibregl-ctrl-bottom-left {
+  left: 16px !important;
+  bottom: 16px !important;
+}
+
+.maplibregl-ctrl-scale {
+  background: var(--background) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  color: var(--muted-foreground) !important;
+  padding: 4px 8px !important;
+  line-height: 1 !important;
+  height: auto !important;
+  margin: 0 !important;
+}
+
+/* Hide any residual MapLibre attribution control */
+.maplibregl-ctrl-attrib {
+  display: none !important;
+}
+
+/* Hide default navigation control if somehow still present */
+.maplibregl-ctrl-group {
+  display: none !important;
+}
+
+/* Remove focus outlines on map canvas */
+.maplibregl-canvas:focus {
+  outline: none !important;
+}
