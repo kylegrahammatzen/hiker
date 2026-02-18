@@ -8,12 +8,13 @@ import {
   PreviewCardPopup,
 } from "@/components/ui/preview-card";
 import { cn } from "@/lib/utils";
-import { MapPin, TrendingUp, Ruler, Mountain } from "lucide-react";
+import { MapPinIcon, TrendUpIcon, RulerIcon, MountainsIcon } from "@phosphor-icons/react";
 
 type TrailCardProps = {
   trail: Trail;
   isSelected: boolean;
   onSelect: () => void;
+  showLocation?: boolean;
 };
 
 const difficultyColor = {
@@ -28,11 +29,10 @@ const difficultyLabel = {
   hard: "Hard",
 };
 
-export function TrailCard({ trail, isSelected, onSelect }: TrailCardProps) {
+export function TrailCard({ trail, isSelected, onSelect, showLocation = true }: TrailCardProps) {
   return (
     <PreviewCard>
       <PreviewCardTrigger
-        delay={0}
         render={
           <button
             type="button"
@@ -48,23 +48,25 @@ export function TrailCard({ trail, isSelected, onSelect }: TrailCardProps) {
         <p className="text-sm font-medium leading-tight">
           {trail.name}
         </p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="size-3 shrink-0" />
-          <span className="truncate">{trail.location}</span>
-        </div>
+        {showLocation && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPinIcon className="size-3 shrink-0" />
+            <span className="truncate">{trail.location}</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Badge variant="ghost" className={cn("text-[10px] px-2 py-0", difficultyColor[trail.difficulty])}>
             {difficultyLabel[trail.difficulty]}
           </Badge>
           {trail.length !== "Varies" && (
             <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Ruler className="size-3" />
+              <RulerIcon className="size-3" />
               {trail.length}
             </span>
           )}
           {trail.elevationGain !== "Varies" && trail.elevationGain !== "Minimal" && (
             <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <TrendingUp className="size-3" />
+              <TrendUpIcon className="size-3" />
               {trail.elevationGain}
             </span>
           )}
@@ -82,13 +84,13 @@ export function TrailCard({ trail, isSelected, onSelect }: TrailCardProps) {
             </Badge>
             {trail.length !== "Varies" && (
               <span className="flex items-center gap-1">
-                <Ruler className="size-3" />
+                <RulerIcon className="size-3" />
                 {trail.length}
               </span>
             )}
             {trail.elevationGain !== "Varies" && trail.elevationGain !== "Minimal" && (
               <span className="flex items-center gap-1">
-                <Mountain className="size-3" />
+                <MountainsIcon className="size-3" />
                 {trail.elevationGain}
               </span>
             )}

@@ -6,9 +6,10 @@ import type { Trail } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useTrailStore } from "@/lib/store";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { trailActions } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { MapPin, TrendingUp, Ruler, Mountain, ChevronLeft, ChevronRight, Share2, Check } from "lucide-react";
+import { MapPinIcon, TrendUpIcon, RulerIcon, MountainsIcon, CaretLeftIcon, CaretRightIcon, ShareNetworkIcon, CheckIcon, QuestionIcon } from "@phosphor-icons/react";
 
 type TrailDetailProps = {
   trail: Trail;
@@ -32,6 +33,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
     ? trail.images
     : [{ url: trail.imageUrl, alt: trail.imageAlt, caption: "" }];
   const [current, setCurrent] = useState(0);
+  const [failed, setFailed] = useState<Set<number>>(new Set());
   const touchStart = useRef(0);
 
   const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length);
@@ -40,7 +42,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
   return (
     <div className="relative w-full">
       <div
-        className="relative h-48 w-full overflow-hidden"
+        className="relative h-48 w-full overflow-hidden bg-muted"
         onTouchStart={(e) => { touchStart.current = e.touches[0]!.clientX; }}
         onTouchEnd={(e) => {
           const delta = e.changedTouches[0]!.clientX - touchStart.current;
@@ -48,14 +50,23 @@ function ImageGallery({ trail }: { trail: Trail }) {
           if (delta < -50) next();
         }}
       >
-        <Image
-          src={images[current]!.url}
-          alt={images[current]!.alt}
-          fill
-          sizes="352px"
-          className="object-cover"
-          priority={current === 0}
-        />
+        {failed.has(current) ? (
+          <Avatar className="size-full rounded-none">
+            <AvatarFallback className="rounded-none bg-muted">
+              <QuestionIcon className="size-12 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <Image
+            src={images[current]!.url}
+            alt={images[current]!.alt}
+            fill
+            sizes="352px"
+            className="object-cover"
+            priority={current === 0}
+            onError={() => setFailed((prev) => new Set(prev).add(current))}
+          />
+        )}
         {images.length > 1 && (
           <>
             <button
@@ -63,14 +74,14 @@ function ImageGallery({ trail }: { trail: Trail }) {
               onClick={prev}
               className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
             >
-              <ChevronLeft className="size-4" />
+              <CaretLeftIcon className="size-4" />
             </button>
             <button
               type="button"
               onClick={next}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
             >
-              <ChevronRight className="size-4" />
+              <CaretRightIcon className="size-4" />
             </button>
           </>
         )}
@@ -112,14 +123,41 @@ function ShareButton({ trailId }: { trailId: string }) {
 
   return (
     <Button variant="outline" size="sm" className="h-8 gap-2" onClick={handleShare}>
-      {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+      {copied ? <CheckIcon className="size-4" /> : <ShareNetworkIcon className="size-4" />}
       {copied ? "Copied" : "Share"}
     </Button>
   );
 }
 
+function NearbyTrailImage({ trail }: { trail: Trail }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <Avatar className="size-10 shrink-0 rounded">
+        <AvatarFallback className="rounded bg-muted">
+          <QuestionIcon className="size-4 text-muted-foreground" />
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  return (
+    <div className="relative size-10 shrink-0 overflow-hidden rounded">
+      <Image
+        src={trail.imageUrl}
+        alt={trail.imageAlt}
+        fill
+        sizes="40px"
+        className="object-cover"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
+
 export function TrailDetail({ trail, nearbyTrails }: TrailDetailProps) {
-  const setSelected = useTrailStore((s) => s.setSelectedTrailId);
+  const setSelected = trailActions.setSelectedTrailId;
 
   return (
     <div className="flex flex-col">
@@ -131,7 +169,7 @@ export function TrailDetail({ trail, nearbyTrails }: TrailDetailProps) {
             <ShareButton trailId={trail.id} />
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="size-4 shrink-0" />
+            <MapPinIcon className="size-4 shrink-0" />
             <span>{trail.location}</span>
           </div>
         </div>
@@ -142,13 +180,13 @@ export function TrailDetail({ trail, nearbyTrails }: TrailDetailProps) {
           </Badge>
           {trail.length !== "Varies" && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Ruler className="size-4" />
+              <RulerIcon className="size-4" />
               <span>{trail.length}</span>
             </div>
           )}
           {trail.elevationGain !== "Varies" && trail.elevationGain !== "Minimal" && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <TrendingUp className="size-4" />
+              <TrendUpIcon className="size-4" />
               <span>{trail.elevationGain}</span>
             </div>
           )}
@@ -168,7 +206,7 @@ export function TrailDetail({ trail, nearbyTrails }: TrailDetailProps) {
         <div className="flex flex-col gap-2">
           <h3 className="text-sm font-medium">Park</h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Mountain className="size-4 shrink-0" />
+            <MountainsIcon className="size-4 shrink-0" />
             <span>{trail.parkName}</span>
           </div>
         </div>
@@ -202,15 +240,7 @@ export function TrailDetail({ trail, nearbyTrails }: TrailDetailProps) {
                     onClick={() => setSelected(t.id)}
                     className="flex items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent"
                   >
-                    <div className="relative size-10 shrink-0 overflow-hidden rounded">
-                      <Image
-                        src={t.imageUrl}
-                        alt={t.imageAlt}
-                        fill
-                        sizes="40px"
-                        className="object-cover"
-                      />
-                    </div>
+                    <NearbyTrailImage trail={t} />
                     <div className="flex flex-col gap-0 min-w-0">
                       <span className="text-xs font-medium leading-tight truncate">{t.name}</span>
                       <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
