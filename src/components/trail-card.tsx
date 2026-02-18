@@ -2,6 +2,7 @@
 
 import type { Trail } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   PreviewCard,
   PreviewCardTrigger,
@@ -9,13 +10,6 @@ import {
 } from "@/components/ui/preview-card";
 import { cn } from "@/lib/utils";
 import { MapPinIcon, TrendUpIcon, RulerIcon, MountainsIcon } from "@phosphor-icons/react";
-
-type TrailCardProps = {
-  trail: Trail;
-  isSelected: boolean;
-  onSelect: () => void;
-  showLocation?: boolean;
-};
 
 const difficultyColor = {
   easy: "bg-success/16 text-success-foreground",
@@ -29,32 +23,39 @@ const difficultyLabel = {
   hard: "Hard",
 };
 
-export function TrailCard({ trail, isSelected, onSelect, showLocation = true }: TrailCardProps) {
+export function TrailCard({
+  trail,
+  isSelected,
+  onSelect,
+  showLocation = true,
+}: {
+  trail: Trail;
+  isSelected: boolean;
+  onSelect: () => void;
+  showLocation?: boolean;
+}) {
   return (
     <PreviewCard>
       <PreviewCardTrigger
         render={
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={onSelect}
             className={cn(
-              "flex flex-col gap-1 rounded-lg p-2 text-left transition-colors w-full",
-              "hover:bg-sidebar-accent",
+              "h-auto w-full min-w-0 flex-col items-start gap-1 rounded-lg p-2 text-left",
               isSelected && "bg-sidebar-accent ring-2 ring-primary/30"
             )}
           />
         }
       >
-        <p className="text-sm font-medium leading-tight">
-          {trail.name}
-        </p>
+        <p className="w-full min-w-0 text-sm font-medium leading-tight break-words">{trail.name}</p>
         {showLocation && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground">
             <MapPinIcon className="size-3 shrink-0" />
-            <span className="truncate">{trail.location}</span>
+            <span className="min-w-0 flex-1 truncate">{trail.location}</span>
           </div>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant="ghost" className={cn("text-[10px] px-2 py-0", difficultyColor[trail.difficulty])}>
             {difficultyLabel[trail.difficulty]}
           </Badge>
@@ -74,10 +75,8 @@ export function TrailCard({ trail, isSelected, onSelect, showLocation = true }: 
       </PreviewCardTrigger>
       <PreviewCardPopup side="right" align="start" sideOffset={8} className="w-64">
         <div className="flex flex-col gap-2">
-          <h4 className="font-medium text-sm leading-tight">{trail.name}</h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {trail.description}
-          </p>
+          <h4 className="text-sm font-medium leading-tight">{trail.name}</h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">{trail.description}</p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <Badge variant="ghost" className={cn("text-[10px] px-2 py-0", difficultyColor[trail.difficulty])}>
               {difficultyLabel[trail.difficulty]}
