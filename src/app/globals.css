@@ -231,21 +231,7 @@
   }
 }
 
-/* Map overlay controls: ensure opaque backgrounds over map canvas */
-.map-controls [data-slot="button"],
-.map-controls [data-slot="sidebar-trigger"] {
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 10%) !important;
-}
 
-.map-controls [data-slot="sidebar-trigger"],
-.map-controls [data-slot="button"]:not([data-variant="destructive"]) {
-  background: var(--background) !important;
-}
-
-.map-controls [data-slot="button"][data-variant="destructive"] {
-  background: var(--destructive) !important;
-}
 
 /* MapLibre control overrides */
 .maplibregl-ctrl-bottom-left {
@@ -279,4 +265,12 @@
 /* Remove focus outlines on map canvas */
 .maplibregl-canvas:focus {
   outline: none !important;
+}
+
+/* Required when using CSPProvider disableStyleElements — Base UI scroll area */
+.base-ui-disable-scrollbar {
+  scrollbar-width: none;
+}
+.base-ui-disable-scrollbar::-webkit-scrollbar {
+  display: none;
 }

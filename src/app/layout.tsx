@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { CSPProvider } from "@base-ui/react/csp-provider";
 import "./globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppPanelProvider, AppPanelInset } from "@/components/ui/app-panel";
 import { AppSidebar } from "@/components/app-sidebar";
+import { TrailProvider } from "@/lib/trail-context";
 import { getTrails } from "@/lib/trails";
 
 const geistSans = Geist({
@@ -30,15 +32,19 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <SidebarProvider defaultOpen={true}>
-            <AppSidebar trails={trails} />
-            <main className="flex-1 h-svh overflow-hidden">{children}</main>
-          </SidebarProvider>
-        </ThemeProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <CSPProvider disableStyleElements>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <TrailProvider>
+              <AppPanelProvider defaultOpen={true}>
+                <AppSidebar trails={trails} />
+                <AppPanelInset className="h-svh overflow-hidden">
+                  {children}
+                </AppPanelInset>
+              </AppPanelProvider>
+            </TrailProvider>
+          </ThemeProvider>
+        </CSPProvider>
       </body>
     </html>
   );
