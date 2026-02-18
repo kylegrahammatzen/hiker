@@ -1,17 +1,26 @@
 import { useSyncExternalStore } from "react";
 
-type TrailStore = {
-  selectedTrailId: string | null;
-  resetSignal: number;
-  visibleTrailIds: string[];
-  setSelectedTrailId: (id: string | null) => void;
-  setVisibleTrailIds: (ids: string[]) => void;
-  resetView: () => void;
-};
-
 type Listener = () => void;
 
-// Read initial trail from URL hash
+let selectedTrailId: string | null = null;
+let resetSignal = 0;
+let visibleTrailIds: string[] = [];
+let mapLoaded = false;
+let focusedParkCode: string | null = null;
+
+const listeners = new Set<Listener>();
+
+function subscribe(listener: Listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function emitChange() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
 function readHash(): string | null {
   if (typeof window === "undefined") return null;
   const hash = window.location.hash.slice(1);
@@ -21,75 +30,23 @@ function readHash(): string | null {
 function writeHash(id: string | null) {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
-  if (id) {
-    url.hash = id;
+  url.hash = id ?? "";
+  window.history.replaceState(null, "", url.toString());
+}
+
+function writeParkParam(parkCode: string | null) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (parkCode) {
+    url.searchParams.set("park", parkCode);
   } else {
-    url.hash = "";
+    url.searchParams.delete("park");
   }
   window.history.replaceState(null, "", url.toString());
 }
 
-let selectedTrailId: string | null = readHash();
-let resetSignal = 0;
-let visibleTrailIds: string[] = [];
-const listeners = new Set<Listener>();
-
-function emitChange() {
-  for (const listener of listeners) {
-    listener();
-  }
-}
-
-function subscribe(listener: Listener) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function getSelectedSnapshot() {
-  return selectedTrailId;
-}
-
-function getResetSnapshot() {
-  return resetSignal;
-}
-
-function getVisibleSnapshot() {
-  return visibleTrailIds;
-}
-
-function getServerSnapshot() {
-  return null;
-}
-
-function getServerResetSnapshot() {
-  return 0;
-}
-
-const emptyIds: string[] = [];
-function getServerVisibleSnapshot() {
-  return emptyIds;
-}
-
-function setSelectedTrailId(id: string | null) {
-  selectedTrailId = id;
-  writeHash(id);
-  emitChange();
-}
-
-function setVisibleTrailIds(ids: string[]) {
-  visibleTrailIds = ids;
-  emitChange();
-}
-
-function resetView() {
-  selectedTrailId = null;
-  writeHash(null);
-  resetSignal++;
-  emitChange();
-}
-
-// Listen for browser back/forward hash changes
 if (typeof window !== "undefined") {
+  selectedTrailId = readHash();
   window.addEventListener("hashchange", () => {
     const id = readHash();
     if (id !== selectedTrailId) {
@@ -99,33 +56,60 @@ if (typeof window !== "undefined") {
   });
 }
 
-export function useTrailStore<T>(selector: (s: TrailStore) => T): T {
-  const selected = useSyncExternalStore(
-    subscribe,
-    getSelectedSnapshot,
-    getServerSnapshot
-  );
+function getSelectedId() { return selectedTrailId; }
+function getResetSignal() { return resetSignal; }
+function getVisibleIds() { return visibleTrailIds; }
+function getMapLoaded() { return mapLoaded; }
+function getFocusedParkCode() { return focusedParkCode; }
 
-  const reset = useSyncExternalStore(
-    subscribe,
-    getResetSnapshot,
-    getServerResetSnapshot
-  );
+const SERVER_EMPTY: string[] = [];
 
-  const visible = useSyncExternalStore(
-    subscribe,
-    getVisibleSnapshot,
-    getServerVisibleSnapshot
-  );
-
-  const store: TrailStore = {
-    selectedTrailId: selected,
-    resetSignal: reset,
-    visibleTrailIds: visible,
-    setSelectedTrailId,
-    setVisibleTrailIds,
-    resetView,
-  };
-
-  return selector(store);
+export function useSelectedTrailId() {
+  return useSyncExternalStore(subscribe, getSelectedId, () => null);
 }
+
+export function useResetSignal() {
+  return useSyncExternalStore(subscribe, getResetSignal, () => 0);
+}
+
+export function useVisibleTrailIds() {
+  return useSyncExternalStore(subscribe, getVisibleIds, () => SERVER_EMPTY);
+}
+
+export function useMapLoaded() {
+  return useSyncExternalStore(subscribe, getMapLoaded, () => false);
+}
+
+export function useFocusedParkCode() {
+  return useSyncExternalStore(subscribe, getFocusedParkCode, () => null);
+}
+
+export const trailActions = {
+  setSelectedTrailId(id: string | null) {
+    selectedTrailId = id;
+    writeHash(id);
+    emitChange();
+  },
+  setVisibleTrailIds(ids: string[]) {
+    visibleTrailIds = ids;
+    emitChange();
+  },
+  setMapLoaded() {
+    if (mapLoaded) return;
+    mapLoaded = true;
+    emitChange();
+  },
+  setFocusedParkCode(parkCode: string | null) {
+    focusedParkCode = parkCode;
+    writeParkParam(parkCode);
+    emitChange();
+  },
+  resetView() {
+    selectedTrailId = null;
+    focusedParkCode = null;
+    writeHash(null);
+    writeParkParam(null);
+    resetSignal++;
+    emitChange();
+  },
+} as const;
