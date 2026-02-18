@@ -1,5 +1,8 @@
 import { join } from "path";
+import { existsSync } from "fs";
 import type { Trail, TrailImage } from "../src/lib/types";
+
+const QUICK_CHECK = process.argv.includes("--quick");
 
 const NPS_API_KEY = process.env.NPS_API_KEY ?? "DEMO_KEY";
 const NPS_BASE = "https://developer.nps.gov/api/v1";
@@ -115,6 +118,16 @@ function estimateElevation(description: string): string {
   return "Minimal";
 }
 
+async function validateImageUrl(url: string): Promise<boolean> {
+  if (!url) return false;
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function fetchWithRetry<T>(url: string, retries = 3): Promise<T | null> {
   for (let i = 0; i < retries; i++) {
     try {
@@ -169,19 +182,27 @@ function isHikingActivity(activity: NPSActivity): boolean {
   );
 }
 
-function collectImages(
+async function collectImages(
   hikeImages: NPSImage[],
   parkImages: NPSImage[],
   fallbackAlt: string
-): { images: TrailImage[]; imageUrl: string; imageAlt: string } {
+): Promise<{ images: TrailImage[]; imageUrl: string; imageAlt: string }> {
   const seen = new Set<string>();
   const images: TrailImage[] = [];
+  const allImages = [...hikeImages, ...parkImages];
 
-  for (const img of [...hikeImages, ...parkImages]) {
+  for (const img of allImages) {
     if (!img.url || seen.has(img.url)) continue;
+    if (images.length >= 5) break;
+    
+    const isValid = await validateImageUrl(img.url);
+    if (!isValid) {
+      console.log(`  Skipping invalid image: ${img.url.slice(0, 60)}...`);
+      continue;
+    }
+    
     seen.add(img.url);
     images.push({ url: img.url, alt: img.altText || fallbackAlt, caption: img.caption || "" });
-    if (images.length >= 5) break;
   }
 
   return {
@@ -191,10 +212,10 @@ function collectImages(
   };
 }
 
-function buildTrailFromHike(
+async function buildTrailFromHike(
   hike: NPSThingToDo,
   park: NPSPark
-): Trail | null {
+): Promise<Trail | null> {
   const lat = hike.latitude
     ? parseFloat(hike.latitude)
     : parseFloat(park.latitude);
@@ -204,7 +225,7 @@ function buildTrailFromHike(
 
   if (isNaN(lat) || isNaN(lng)) return null;
 
-  const { images, imageUrl, imageAlt } = collectImages(
+  const { images, imageUrl, imageAlt } = await collectImages(
     hike.images ?? [],
     park.images ?? [],
     hike.title
@@ -232,13 +253,13 @@ function buildTrailFromHike(
   };
 }
 
-function buildTrailFromPark(park: NPSPark): Trail | null {
+async function buildTrailFromPark(park: NPSPark): Promise<Trail | null> {
   const lat = parseFloat(park.latitude);
   const lng = parseFloat(park.longitude);
 
   if (isNaN(lat) || isNaN(lng)) return null;
 
-  const { images, imageUrl, imageAlt } = collectImages(
+  const { images, imageUrl, imageAlt } = await collectImages(
     [],
     park.images ?? [],
     park.fullName
@@ -264,6 +285,36 @@ function buildTrailFromPark(park: NPSPark): Trail | null {
 }
 
 async function main() {
+  const outputPath = join(import.meta.dir, "..", "src", "data", "trails.json");
+  
+  if (QUICK_CHECK && existsSync(outputPath)) {
+    console.log("Quick check mode: validating existing images...");
+    const content = await Bun.file(outputPath).json();
+    const trails: Trail[] = content;
+    let updated = 0;
+    
+    for (const trail of trails) {
+      const validImages: TrailImage[] = [];
+      for (const img of trail.images) {
+        const isValid = await validateImageUrl(img.url);
+        if (isValid) {
+          validImages.push(img);
+        } else {
+          console.log(`  Removing invalid: ${img.url.slice(0, 60)}...`);
+          updated++;
+        }
+      }
+      trail.images = validImages;
+      trail.imageUrl = validImages[0]?.url ?? "/images/trails/default.jpg";
+      trail.imageAlt = validImages[0]?.alt ?? trail.name;
+    }
+    
+    console.log(`\nUpdated ${updated} images`);
+    await Bun.write(outputPath, JSON.stringify(trails, null, 2));
+    console.log(`Written to ${outputPath}`);
+    return;
+  }
+
   console.log("Fetching parks from NPS API...");
   const parks = await fetchParks();
   console.log(`Got ${parks.length} parks`);
@@ -282,7 +333,7 @@ async function main() {
 
     if (hikingThings.length > 0) {
       for (const hike of hikingThings.slice(0, 10)) {
-        const trail = buildTrailFromHike(hike, park);
+        const trail = await buildTrailFromHike(hike, park);
         if (trail && !seen.has(trail.id)) {
           seen.add(trail.id);
           trails.push(trail);
@@ -291,7 +342,7 @@ async function main() {
     } else {
       const hasHiking = park.activities.some(isHikingActivity);
       if (hasHiking) {
-        const trail = buildTrailFromPark(park);
+        const trail = await buildTrailFromPark(park);
         if (trail && !seen.has(trail.id)) {
           seen.add(trail.id);
           trails.push(trail);
@@ -302,7 +353,6 @@ async function main() {
 
   console.log(`\nTotal trails collected: ${trails.length}`);
 
-  const outputPath = join(import.meta.dir, "..", "src", "data", "trails.json");
   await Bun.write(outputPath, JSON.stringify(trails, null, 2));
   console.log(`Written to ${outputPath}`);
 }
