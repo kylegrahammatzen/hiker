@@ -24,7 +24,7 @@ export type MapViewHandle = {
 const STADIA_SATELLITE = "https://tiles.stadiamaps.com/styles/alidade_satellite.json";
 
 export const DEFAULT_CENTER: [number, number] = [-98.5, 39.8];
-export const DEFAULT_ZOOM = 4;
+export const DEFAULT_ZOOM = 4.2;
 
 const LIGHT_COLORS = {
   clusterSteps: ["#16a34a", "#0d9488", "#0284c7"] as [string, string, string],
