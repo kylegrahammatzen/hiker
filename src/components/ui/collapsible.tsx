@@ -14,7 +14,10 @@ function CollapsibleTrigger({
 }: CollapsiblePrimitive.Trigger.Props) {
   return (
     <CollapsiblePrimitive.Trigger
-      className={cn("cursor-pointer", className)}
+      className={cn(
+        "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        className,
+      )}
       data-slot="collapsible-trigger"
       {...props}
     />
@@ -28,7 +31,7 @@ function CollapsiblePanel({
   return (
     <CollapsiblePrimitive.Panel
       className={cn(
-        "h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0",
+        "h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-100 ease-out data-ending-style:h-0 data-starting-style:h-0",
         className,
       )}
       data-slot="collapsible-panel"
