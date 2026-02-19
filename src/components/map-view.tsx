@@ -178,9 +178,17 @@ export default function MapView({ trails, theme, initialParkCode, ref }: MapView
   const focusedParkCode = useFocusedParkCode();
   const actions = useTrailActions();
 
-  trailsRef.current = trails;
-  isDarkRef.current = theme === "dark";
-  selectedIdRef.current = selectedId;
+  useEffect(() => {
+    trailsRef.current = trails;
+  }, [trails]);
+
+  useEffect(() => {
+    isDarkRef.current = theme === "dark";
+  }, [theme]);
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
 
   useEffect(() => {
     if (!ref) return;
@@ -216,6 +224,11 @@ export default function MapView({ trails, theme, initialParkCode, ref }: MapView
       style: STYLE_SATELLITE,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
+      minZoom: 3,
+      maxBounds: [
+        [-179.5, 15], // Southwest (includes Hawaii at ~19°N, and buffer)
+        [-65, 72],    // Northeast (includes Alaska up to ~71°N)
+      ],
       attributionControl: false,
       fadeDuration: 0,
       renderWorldCopies: false,
