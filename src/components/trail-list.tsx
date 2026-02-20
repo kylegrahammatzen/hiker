@@ -54,7 +54,9 @@ export function TrailList({ groups }: { groups: ParkGroup[] }) {
   useEffect(() => {
     setOpenPark((prev) => {
       if (!prev) return groups.length === 1 ? groups[0]!.parkName : null;
-      if (!groups.some((g) => g.parkName === prev)) return null;
+      if (!groups.some((g) => g.parkName === prev)) {
+        return groups[0]?.parkName ?? null;
+      }
       return prev;
     });
   }, [groupKey, groups]);

@@ -27,6 +27,10 @@ const STYLE_SATELLITE = "/api/tiles/styles/alidade_satellite.json";
 
 export const DEFAULT_CENTER: [number, number] = [-98.5, 39.8];
 export const DEFAULT_ZOOM = 4.2;
+const MAX_BOUNDS: maplibregl.LngLatBoundsLike = [
+  [-179.9, 15],
+  [-52, 72.5],
+];
 
 const LIGHT_COLORS = {
   clusterSteps: ["#16a34a", "#0d9488", "#0284c7"] as [string, string, string],
@@ -225,10 +229,7 @@ export default function MapView({ trails, theme, initialParkCode, ref }: MapView
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       minZoom: 3,
-      maxBounds: [
-        [-179.5, 15], // Southwest (includes Hawaii at ~19°N, and buffer)
-        [-65, 72],    // Northeast (includes Alaska up to ~71°N)
-      ],
+      maxBounds: MAX_BOUNDS,
       attributionControl: false,
       fadeDuration: 0,
       renderWorldCopies: false,
