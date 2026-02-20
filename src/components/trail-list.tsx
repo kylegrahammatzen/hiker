@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { MagnifyingGlassMinusIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { TrailCard } from "@/components/trail-card";
-import { useSelectedTrailId, useTrailActions, useFocusedParkCode } from "@/lib/trail-context";
+import { useSelectedTrailId, useTrailActions } from "@/lib/trail-context";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -34,15 +34,8 @@ function buildRows(groups: ParkGroup[], openPark: string | null): Row[] {
 const HEADER_HEIGHT = 40;
 const TRAIL_HEIGHT = 72;
 
-export function TrailList({
-  groups,
-  hideVisibleFilter = false,
-}: {
-  groups: ParkGroup[];
-  hideVisibleFilter?: boolean;
-}) {
+export function TrailList({ groups }: { groups: ParkGroup[] }) {
   const selectedId = useSelectedTrailId();
-  const focusedParkCode = useFocusedParkCode();
   const actions = useTrailActions();
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -73,16 +66,6 @@ export function TrailList({
     if (park) setOpenPark(park.parkName);
   }, [selectedId, groups]);
 
-  // Open the focused park
-  useEffect(() => {
-    if (!focusedParkCode) {
-      setOpenPark(groups.length === 1 ? groups[0]!.parkName : null);
-      return;
-    }
-    const park = groups.find((g) => g.parkCode === focusedParkCode);
-    if (park) setOpenPark(park.parkName);
-  }, [focusedParkCode, groups]);
-
   const rows = buildRows(groups, openPark);
 
   const virtualizer = useVirtualizer({
@@ -96,14 +79,8 @@ export function TrailList({
     (group: ParkGroup) => {
       const willOpen = openPark !== group.parkName;
       setOpenPark(willOpen ? group.parkName : null);
-      if (willOpen && group.parkCode !== "other") {
-        actions.setLoadingPark(true);
-        actions.setFocusedParkCode(group.parkCode);
-      } else if (!willOpen) {
-        actions.setFocusedParkCode(null);
-      }
     },
-    [openPark, actions],
+    [openPark],
   );
 
   if (groups.length === 0) {

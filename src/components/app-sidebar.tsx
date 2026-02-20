@@ -9,14 +9,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppPanel } from "@/components/ui/app-panel";
 import { TrailList } from "@/components/trail-list";
 import { TrailDetail } from "@/components/trail-detail";
-import { Spinner } from "@/components/ui/spinner";
 import {
   useSelectedTrailId,
   useMapLoaded,
   useTrailActions,
   useVisibleTrailIds,
-  useFocusedParkCode,
-  useIsLoadingPark,
 } from "@/lib/trail-context";
 import { groupByPark, computeDisplayGroups } from "@/lib/trail-grouping";
 import type { Trail } from "@/lib/types";
@@ -27,8 +24,6 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
   const mapLoaded = useMapLoaded();
   const actions = useTrailActions();
   const visibleTrailIds = useVisibleTrailIds();
-  const focusedParkCode = useFocusedParkCode();
-  const isLoadingPark = useIsLoadingPark();
 
   const selectedTrail = trails.find((t) => t.id === selectedId);
   const q = search.toLowerCase();
@@ -42,21 +37,12 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
       t.state.toLowerCase().includes(q),
   );
 
-  // When focused on a park, show all trails in that park
-  // Otherwise, show only trails visible in the current viewport
-  const displayTrails = focusedParkCode
-    ? filtered.filter((t) => t.parkCode === focusedParkCode)
-    : visibleSet.size > 0
-      ? filtered.filter((t) => visibleSet.has(t.id))
-      : filtered;
+  // Show trails visible in the current viewport (or all if viewport not ready)
+  const displayTrails = visibleSet.size > 0
+    ? filtered.filter((t) => visibleSet.has(t.id))
+    : filtered;
 
   const { allGroups, uniqueParkCount } = computeDisplayGroups(groupByPark(displayTrails));
-
-  const handleBack = () => {
-    setSearch("");
-    actions.setLoadingPark(false);
-    actions.setFocusedParkCode(null);
-  };
 
   return (
     <AppPanel>
@@ -67,17 +53,11 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
           <span className="text-lg font-semibold tracking-tight flex-1">
             hiker
           </span>
-          {(selectedTrail || focusedParkCode) && (
+          {selectedTrail && (
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => {
-                if (selectedTrail) {
-                  actions.setSelectedTrailId(null);
-                } else {
-                  handleBack();
-                }
-              }}
+              onClick={() => actions.setSelectedTrailId(null)}
             >
               <ArrowLeftIcon className="size-4" />
             </Button>
@@ -111,10 +91,6 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
               )}
             />
           </ScrollArea>
-        ) : isLoadingPark ? (
-          <div className="flex flex-1 items-center justify-center">
-            <Spinner className="size-6" />
-          </div>
         ) : mapLoaded ? (
           <>
             <p className="px-2 py-1.5 text-xs text-muted-foreground shrink-0">
@@ -122,11 +98,7 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
               {uniqueParkCount} {uniqueParkCount === 1 ? "park" : "parks"}
             </p>
             <div className="flex-1 min-h-0">
-              <TrailList
-                key={focusedParkCode ?? "all"}
-                groups={allGroups}
-                hideVisibleFilter={focusedParkCode === null}
-              />
+              <TrailList groups={allGroups} />
             </div>
           </>
         ) : (

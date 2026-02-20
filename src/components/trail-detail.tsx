@@ -184,6 +184,18 @@ function NearbyTrailRow({ trail, onSelect }: { trail: Trail; onSelect: () => voi
   );
 }
 
+function getDistance(a: Trail, b: Trail): number {
+  const R = 3959; // Earth's radius in miles
+  const dLat = ((b.coordinates.lat - a.coordinates.lat) * Math.PI) / 180;
+  const dLng = ((b.coordinates.lng - a.coordinates.lng) * Math.PI) / 180;
+  const lat1 = (a.coordinates.lat * Math.PI) / 180;
+  const lat2 = (b.coordinates.lat * Math.PI) / 180;
+  const x =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
 export function TrailDetail({
   trail,
   nearbyTrails,
@@ -193,10 +205,16 @@ export function TrailDetail({
 }) {
   const actions = useTrailActions();
 
+  // Sort nearby trails by distance from current trail
+  const sortedNearby = nearbyTrails
+    ?.map((t) => ({ trail: t, distance: getDistance(trail, t) }))
+    .sort((a, b) => a.distance - b.distance)
+    .map((x) => x.trail);
+
   return (
     <div className="flex flex-col">
       <ImageGallery trail={trail} />
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-2 p-2">
         <div className="flex flex-col gap-2">
           <h2 className="text-base font-semibold leading-tight">{trail.name}</h2>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -233,39 +251,13 @@ export function TrailDetail({
           <p className="text-sm text-muted-foreground leading-relaxed">{trail.description}</p>
         </div>
 
-        <Separator />
-
-        <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-medium">Park</h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MountainsIcon className="size-4 shrink-0" />
-            <span>{trail.parkName}</span>
-          </div>
-        </div>
-
-        {trail.activities.length > 0 && (
-          <>
-            <Separator />
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium">Activities</h3>
-              <div className="flex flex-wrap gap-2">
-                {trail.activities.map((activity) => (
-                  <Badge key={activity} variant="outline">
-                    {activity}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {nearbyTrails && nearbyTrails.length > 0 && (
+        {sortedNearby && sortedNearby.length > 0 && (
           <>
             <Separator />
             <div className="flex flex-col gap-2">
               <h3 className="text-sm font-medium">More in {trail.parkName}</h3>
               <div className="-mx-2 flex flex-col">
-                {nearbyTrails.map((t) => (
+                {sortedNearby.map((t) => (
                   <NearbyTrailRow
                     key={t.id}
                     trail={t}
