@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import type { Trail } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
   ShareNetworkIcon,
   CheckIcon,
   ImageBrokenIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import type { TrailImage as TrailImageType } from "@/lib/types";
 
@@ -42,12 +44,25 @@ function ImageGallery({ trail }: { trail: Trail }) {
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
   const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
   const [current, setCurrent] = useState(0);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const touchStart = useRef(0);
 
   const validImages = allImages.filter((img) => !failedUrls.has(img.url));
   const hasImages = validImages.length > 0;
-  const currentImage = validImages[current];
+  const currentImage = validImages[current] ?? validImages[0];
   const isCurrentLoaded = currentImage ? loadedUrls.has(currentImage.url) : false;
+
+  useEffect(() => {
+    if (current >= validImages.length && validImages.length > 0) {
+      setCurrent(validImages.length - 1);
+    }
+  }, [current, validImages.length]);
+
+  useEffect(() => {
+    if (!hasImages && isFullscreenOpen) {
+      setIsFullscreenOpen(false);
+    }
+  }, [hasImages, isFullscreenOpen]);
 
   const handleImageError = (url: string) => {
     setFailedUrls((prev) => new Set(prev).add(url));
@@ -97,6 +112,16 @@ function ImageGallery({ trail }: { trail: Trail }) {
             <ImageBrokenIcon className="size-12 text-muted-foreground/40" />
           </div>
         )}
+        {hasImages && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsFullscreenOpen(true)}
+            className="absolute right-2 top-2 rounded-full bg-black/40 px-2.5 text-white hover:bg-black/60 backdrop-blur-sm"
+          >
+            Full screen
+          </Button>
+        )}
         {hasImages && validImages.length > 1 && (
           <>
             <Button
@@ -133,11 +158,104 @@ function ImageGallery({ trail }: { trail: Trail }) {
           ))}
         </div>
       )}
-      {hasImages && validImages[current]?.caption && (
+      {hasImages && currentImage?.caption && (
         <p className="px-4 pb-2 text-xs text-muted-foreground italic">
-          {validImages[current]!.caption}
+          {currentImage.caption}
         </p>
       )}
+
+      <DialogPrimitive.Root open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+          <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-3 sm:p-6">
+            <DialogPrimitive.Popup className="relative flex w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-white/15 bg-black/95 text-white shadow-2xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95">
+              <DialogPrimitive.Title className="sr-only">{trail.name} image carousel</DialogPrimitive.Title>
+              <DialogPrimitive.Description className="sr-only">
+                Full-screen image carousel for this trail.
+              </DialogPrimitive.Description>
+
+              <DialogPrimitive.Close
+                aria-label="Close full screen"
+                className="absolute right-3 top-3 z-20"
+                render={<Button size="icon-sm" variant="ghost" className="rounded-full bg-black/48 text-white hover:bg-black/72" />}
+              >
+                <XIcon />
+              </DialogPrimitive.Close>
+
+              <div
+                className="relative h-[min(72vh,780px)] w-full bg-black"
+                onTouchStart={(e) => {
+                  touchStart.current = e.touches[0]!.clientX;
+                }}
+                onTouchEnd={(e) => {
+                  if (!hasImages || validImages.length <= 1) return;
+                  const delta = e.changedTouches[0]!.clientX - touchStart.current;
+                  if (delta > 50) prev();
+                  if (delta < -50) next();
+                }}
+              >
+                {!isCurrentLoaded && <div className="absolute inset-0 animate-pulse bg-white/8" />}
+
+                {hasImages && (
+                  <Image
+                    key={`fullscreen-${currentImage!.url}`}
+                    src={currentImage!.url}
+                    alt={currentImage!.alt}
+                    fill
+                    unoptimized
+                    className={cn("object-contain transition-opacity duration-200", isCurrentLoaded ? "opacity-100" : "opacity-0")}
+                    onLoad={() => handleImageLoad(currentImage!.url)}
+                    onError={() => handleImageError(currentImage!.url)}
+                  />
+                )}
+
+                {hasImages && validImages.length > 1 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={prev}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 text-white hover:bg-black/70"
+                    >
+                      <CaretLeftIcon />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={next}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 text-white hover:bg-black/70"
+                    >
+                      <CaretRightIcon />
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {hasImages && validImages.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 border-t border-white/10 px-4 py-3">
+                  {validImages.map((_, i) => (
+                    <button
+                      key={`fullscreen-dot-${i}`}
+                      type="button"
+                      onClick={() => setCurrent(i)}
+                      className={cn(
+                        "size-2 rounded-full transition-colors",
+                        i === current ? "bg-white" : "bg-white/30"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {hasImages && currentImage?.caption && (
+                <p className="border-t border-white/10 px-4 py-3 text-center text-sm text-white/80 italic">
+                  {currentImage.caption}
+                </p>
+              )}
+            </DialogPrimitive.Popup>
+          </DialogPrimitive.Viewport>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </div>
   );
 }

@@ -224,7 +224,7 @@ export default function MapView({ trails, theme, initialParkCode, ref }: MapView
       style: STYLE_SATELLITE,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
-      minZoom: 3,
+      minZoom: DEFAULT_ZOOM,
       attributionControl: false,
       fadeDuration: 0,
       renderWorldCopies: false,
