@@ -210,11 +210,22 @@ export function TrailDetail({
 }) {
   const actions = useTrailActions();
 
-  // Sort nearby trails by distance from current trail
-  const sortedNearby = nearbyTrails
-    ?.map((t) => ({ trail: t, distance: getDistance(trail, t) }))
-    .sort((a, b) => a.distance - b.distance)
-    .map((x) => x.trail);
+  // Sort nearby trails by distance from current trail, then by difficulty
+  const DIFFICULTY_ORDER = { easy: 0, moderate: 1, hard: 2 } as const;
+  const sortedNearby = nearbyTrails?.slice().sort((a, b) => {
+    const distA = getDistance(trail, a);
+    const distB = getDistance(trail, b);
+    // If distances are meaningfully different (> 0.1 mile), sort by distance
+    if (Math.abs(distA - distB) > 0.1) return distA - distB;
+    // Otherwise sort by difficulty
+    const diffA = DIFFICULTY_ORDER[a.difficulty];
+    const diffB = DIFFICULTY_ORDER[b.difficulty];
+    if (diffA !== diffB) return diffA - diffB;
+    // Then by length
+    const lenA = parseFloat(a.length) || 0;
+    const lenB = parseFloat(b.length) || 0;
+    return lenA - lenB;
+  });
 
   return (
     <div className="flex flex-col">
