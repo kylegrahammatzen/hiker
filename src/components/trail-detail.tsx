@@ -161,38 +161,13 @@ function ShareButton({ trailId }: { trailId: string }) {
   );
 }
 
-function NearbyTrailPhoto({ trail }: { trail: Trail }) {
-  const src = trail.images?.[0]?.url ?? trail.imageUrl;
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div className="relative size-10 shrink-0 overflow-hidden rounded bg-muted">
-      {failed ? (
-        <div className="flex size-full items-center justify-center">
-          <ImageBrokenIcon className="size-4 text-muted-foreground/40" />
-        </div>
-      ) : (
-        <Image
-          src={src}
-          alt={trail.imageAlt}
-          fill
-          unoptimized
-          className="object-cover"
-          onError={() => setFailed(true)}
-        />
-      )}
-    </div>
-  );
-}
-
 function NearbyTrailRow({ trail, onSelect }: { trail: Trail; onSelect: () => void }) {
   return (
     <Button
       variant="ghost"
-      className="h-auto w-full justify-start gap-2 rounded-lg px-2 py-2"
+      className="h-auto w-full justify-start gap-2 rounded-lg px-2 py-1.5"
       onClick={onSelect}
     >
-      <NearbyTrailPhoto trail={trail} />
       <div className="flex min-w-0 flex-col gap-0">
         <span className="truncate text-xs font-medium leading-tight">{trail.name}</span>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
