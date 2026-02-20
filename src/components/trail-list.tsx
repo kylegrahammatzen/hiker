@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { MagnifyingGlassMinusIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { TrailCard } from "@/components/trail-card";
@@ -83,7 +83,7 @@ export function TrailList({
     if (park) setOpenPark(park.parkName);
   }, [focusedParkCode, groups]);
 
-  const rows = useMemo(() => buildRows(groups, openPark), [groups, openPark]);
+  const rows = buildRows(groups, openPark);
 
   const virtualizer = useVirtualizer({
     count: rows.length,

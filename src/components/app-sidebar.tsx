@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { MountainsIcon, ArrowLeftIcon } from "@phosphor-icons/react";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,9 +21,8 @@ import {
 import { groupByPark, computeDisplayGroups } from "@/lib/trail-grouping";
 import type { Trail } from "@/lib/types";
 
-export function AppSidebar({ trails }: { trails?: Trail[] }) {
+export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
   const [search, setSearch] = useState("");
-  const allTrails = trails ?? [];
   const selectedId = useSelectedTrailId();
   const mapLoaded = useMapLoaded();
   const actions = useTrailActions();
@@ -31,38 +30,27 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
   const focusedParkCode = useFocusedParkCode();
   const isLoadingPark = useIsLoadingPark();
 
-  const selectedTrail = allTrails.find((t) => t.id === selectedId);
-
+  const selectedTrail = trails.find((t) => t.id === selectedId);
   const q = search.toLowerCase();
-  const filtered = useMemo(
-    () =>
-      allTrails.filter(
-        (t) =>
-          !q ||
-          t.name.toLowerCase().includes(q) ||
-          t.parkName.toLowerCase().includes(q) ||
-          t.state.toLowerCase().includes(q),
-      ),
-    [allTrails, q],
+  const visibleSet = new Set(visibleTrailIds);
+
+  const filtered = trails.filter(
+    (t) =>
+      !q ||
+      t.name.toLowerCase().includes(q) ||
+      t.parkName.toLowerCase().includes(q) ||
+      t.state.toLowerCase().includes(q),
   );
 
-  const visibleSet = useMemo(() => new Set(visibleTrailIds), [visibleTrailIds]);
-  
-  // When focused on a park, show all trails in that park (not just viewport visible)
+  // When focused on a park, show all trails in that park
   // Otherwise, show only trails visible in the current viewport
-  const displayTrails = useMemo(() => {
-    if (focusedParkCode) {
-      // Show all trails in the focused park
-      return filtered.filter((t) => t.parkCode === focusedParkCode);
-    }
-    // Show trails visible in viewport (or all if viewport not ready)
-    return visibleSet.size > 0 ? filtered.filter((t) => visibleSet.has(t.id)) : filtered;
-  }, [filtered, focusedParkCode, visibleSet]);
+  const displayTrails = focusedParkCode
+    ? filtered.filter((t) => t.parkCode === focusedParkCode)
+    : visibleSet.size > 0
+      ? filtered.filter((t) => visibleSet.has(t.id))
+      : filtered;
 
-  const { allGroups, uniqueParkCount } = useMemo(
-    () => computeDisplayGroups(groupByPark(displayTrails)),
-    [displayTrails],
-  );
+  const { allGroups, uniqueParkCount } = computeDisplayGroups(groupByPark(displayTrails));
 
   const handleBack = () => {
     setSearch("");
@@ -116,7 +104,7 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
           <ScrollArea className="flex-1 min-h-0">
             <TrailDetail
               trail={selectedTrail}
-              nearbyTrails={allTrails.filter(
+              nearbyTrails={trails.filter(
                 (t) =>
                   t.parkName === selectedTrail.parkName &&
                   t.id !== selectedTrail.id,

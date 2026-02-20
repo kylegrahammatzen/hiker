@@ -165,17 +165,20 @@ function NearbyTrailRow({ trail, onSelect }: { trail: Trail; onSelect: () => voi
   return (
     <Button
       variant="ghost"
-      className="h-auto w-full justify-start gap-2 rounded-lg px-2 py-1.5"
+      className="h-auto w-full flex-col items-start gap-1 rounded-lg p-2 text-left"
       onClick={onSelect}
     >
-      <div className="flex min-w-0 flex-col gap-0">
-        <span className="truncate text-xs font-medium leading-tight">{trail.name}</span>
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <Badge variant="ghost" className={cn("text-[10px] px-1 py-0", difficultyColor[trail.difficulty])}>
-            {difficultyLabel[trail.difficulty]}
-          </Badge>
-          {trail.length !== "Varies" && <span>{trail.length}</span>}
-        </span>
+      <span className="w-full min-w-0 text-sm font-medium leading-tight break-words">{trail.name}</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="ghost" className={cn("text-[10px] px-2 py-0", difficultyColor[trail.difficulty])}>
+          {difficultyLabel[trail.difficulty]}
+        </Badge>
+        {trail.length !== "Varies" && (
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <RulerIcon className="size-3" />
+            {trail.length}
+          </span>
+        )}
       </div>
     </Button>
   );
