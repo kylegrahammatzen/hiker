@@ -40,14 +40,21 @@ function ImageGallery({ trail }: { trail: Trail }) {
       : [{ url: trail.imageUrl, alt: trail.imageAlt, caption: "" }];
   
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
+  const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
   const [current, setCurrent] = useState(0);
   const touchStart = useRef(0);
 
   const validImages = allImages.filter((img) => !failedUrls.has(img.url));
   const hasImages = validImages.length > 0;
+  const currentImage = validImages[current];
+  const isCurrentLoaded = currentImage ? loadedUrls.has(currentImage.url) : false;
 
   const handleImageError = (url: string) => {
     setFailedUrls((prev) => new Set(prev).add(url));
+  };
+
+  const handleImageLoad = (url: string) => {
+    setLoadedUrls((prev) => new Set(prev).add(url));
   };
 
   const prev = () => setCurrent((c) => (c - 1 + validImages.length) % validImages.length);
@@ -68,15 +75,23 @@ function ImageGallery({ trail }: { trail: Trail }) {
         }}
       >
         {hasImages ? (
-          <Image
-            key={validImages[current]!.url}
-            src={validImages[current]!.url}
-            alt={validImages[current]!.alt}
-            fill
-            unoptimized
-            className="object-cover"
-            onError={() => handleImageError(validImages[current]!.url)}
-          />
+          <>
+            {/* Skeleton while loading */}
+            {!isCurrentLoaded && (
+              <div className="absolute inset-0 animate-pulse bg-muted" />
+            )}
+            <Image
+              key={currentImage!.url}
+              src={currentImage!.url}
+              alt={currentImage!.alt}
+              fill
+              unoptimized
+              priority
+              className={cn("object-cover transition-opacity", isCurrentLoaded ? "opacity-100" : "opacity-0")}
+              onLoad={() => handleImageLoad(currentImage!.url)}
+              onError={() => handleImageError(currentImage!.url)}
+            />
+          </>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <ImageBrokenIcon className="size-12 text-muted-foreground/40" />

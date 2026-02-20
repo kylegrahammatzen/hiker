@@ -64,8 +64,6 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
     [displayTrails],
   );
 
-  const showBackButton = search.length > 0 || focusedParkCode !== null;
-
   const handleBack = () => {
     setSearch("");
     actions.setLoadingPark(false);
@@ -74,55 +72,42 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
 
   return (
     <AppPanel>
-      <div className="flex flex-col gap-3 px-3 pt-3 pb-2 shrink-0">
-        <div className="flex items-center gap-2">
-          {selectedTrail ? (
-            <>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => actions.setSelectedTrailId(null)}
-              >
-                <ArrowLeftIcon className="size-4" />
-              </Button>
-              <span className="text-sm font-medium truncate">
-                Back to trails
-              </span>
-            </>
-          ) : (
-            <>
-              <MountainsIcon className="size-5 text-primary" />
-              <span className="text-lg font-semibold tracking-tight">
-                hiker
-              </span>
-            </>
+      <div className="flex flex-col gap-2 px-2 pt-2 pb-2 shrink-0">
+        {/* Header - logo first, then optional back button */}
+        <div className="flex h-8 items-center gap-2">
+          <MountainsIcon className="size-5 text-primary" />
+          <span className="text-lg font-semibold tracking-tight flex-1">
+            hiker
+          </span>
+          {(selectedTrail || focusedParkCode) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => {
+                if (selectedTrail) {
+                  actions.setSelectedTrailId(null);
+                } else {
+                  handleBack();
+                }
+              }}
+            >
+              <ArrowLeftIcon className="size-4" />
+            </Button>
           )}
         </div>
+        {/* Search bar - only show when not viewing a trail detail */}
         {!selectedTrail && (
-          <div className="flex items-center gap-2">
-            {showBackButton && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Go back"
-                onClick={handleBack}
-                className="shrink-0"
-              >
-                <ArrowLeftIcon className="size-4" />
-              </Button>
-            )}
-            <InputGroup className="flex-1">
-              <InputGroupInput
-                aria-label="Search trails"
-                placeholder="Search trails..."
-                type="search"
-                value={search}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearch(e.target.value)
-                }
-              />
-            </InputGroup>
-          </div>
+          <InputGroup>
+            <InputGroupInput
+              aria-label="Search trails"
+              placeholder="Search trails..."
+              type="search"
+              value={search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearch(e.target.value)
+              }
+            />
+          </InputGroup>
         )}
       </div>
 
