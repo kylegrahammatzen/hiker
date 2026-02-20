@@ -47,10 +47,17 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
   );
 
   const visibleSet = useMemo(() => new Set(visibleTrailIds), [visibleTrailIds]);
-  const displayTrails = useMemo(
-    () => (focusedParkCode !== null ? filtered.filter((t) => visibleSet.has(t.id)) : filtered),
-    [filtered, focusedParkCode, visibleSet],
-  );
+  
+  // When focused on a park, show all trails in that park (not just viewport visible)
+  // Otherwise, show only trails visible in the current viewport
+  const displayTrails = useMemo(() => {
+    if (focusedParkCode) {
+      // Show all trails in the focused park
+      return filtered.filter((t) => t.parkCode === focusedParkCode);
+    }
+    // Show trails visible in viewport (or all if viewport not ready)
+    return visibleSet.size > 0 ? filtered.filter((t) => visibleSet.has(t.id)) : filtered;
+  }, [filtered, focusedParkCode, visibleSet]);
 
   const { allGroups, uniqueParkCount } = useMemo(
     () => computeDisplayGroups(groupByPark(displayTrails)),
