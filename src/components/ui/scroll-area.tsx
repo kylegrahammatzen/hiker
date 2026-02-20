@@ -12,7 +12,7 @@ function ScrollArea({
   scrollFade = false,
   scrollbarGutter = false,
   ...props
-}: ScrollAreaPrimitive.Root.Props & {
+}: Omit<ScrollAreaPrimitive.Root.Props, "viewportRef"> & {
   scrollFade?: boolean;
   scrollbarGutter?: boolean;
   viewportRef?: React.Ref<HTMLDivElement>;
