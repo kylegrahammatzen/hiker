@@ -185,6 +185,11 @@ function NearbyTrailRow({ trail, onSelect }: { trail: Trail; onSelect: () => voi
 }
 
 function getDistance(a: Trail, b: Trail): number {
+  // Return large number if coordinates are missing/invalid
+  if (!a.coordinates || !b.coordinates) return Infinity;
+  if (!Number.isFinite(a.coordinates.lat) || !Number.isFinite(a.coordinates.lng)) return Infinity;
+  if (!Number.isFinite(b.coordinates.lat) || !Number.isFinite(b.coordinates.lng)) return Infinity;
+  
   const R = 3959; // Earth's radius in miles
   const dLat = ((b.coordinates.lat - a.coordinates.lat) * Math.PI) / 180;
   const dLng = ((b.coordinates.lng - a.coordinates.lng) * Math.PI) / 180;
@@ -215,12 +220,13 @@ export function TrailDetail({
     <div className="flex flex-col">
       <ImageGallery trail={trail} />
       <div className="flex flex-col gap-2 p-2">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <h2 className="text-base font-semibold leading-tight">{trail.name}</h2>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPinIcon className="size-4 shrink-0" />
             <span>{trail.location}</span>
           </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">{trail.description}</p>
         </div>
 
         <div className="flex items-center justify-between gap-2">
@@ -242,13 +248,6 @@ export function TrailDetail({
             )}
           </div>
           <ShareButton trailId={trail.id} />
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-medium">About</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{trail.description}</p>
         </div>
 
         {sortedNearby && sortedNearby.length > 0 && (
