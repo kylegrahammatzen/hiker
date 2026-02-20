@@ -11,6 +11,7 @@ import { Sheet, SheetPopup } from "@/components/ui/sheet"
 type PanelContextValue = {
   open: boolean
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isMobile: boolean
 }
 
 const PanelContext = React.createContext<PanelContextValue | null>(null)
@@ -29,6 +30,16 @@ function AppPanelProvider({
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = React.useState(defaultOpen)
+  const [isMobile, setIsMobile] = React.useState(false)
+
+  React.useEffect(() => {
+    const mql = window.matchMedia("(max-width: 767px)")
+    setIsMobile(mql.matches)
+    
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mql.addEventListener("change", handler)
+    return () => mql.removeEventListener("change", handler)
+  }, [])
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -42,7 +53,7 @@ function AppPanelProvider({
   }, [])
 
   return (
-    <PanelContext value={{ open, setOpen }}>
+    <PanelContext value={{ open, setOpen, isMobile }}>
       {children}
     </PanelContext>
   )
@@ -55,40 +66,38 @@ function AppPanel({
   children,
   ...props
 }: React.ComponentProps<"aside">) {
-  const { open, setOpen } = usePanel()
+  const { open, setOpen, isMobile } = usePanel()
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetPopup 
+          side="left" 
+          showCloseButton={false}
+          className="w-[85vw] max-w-sm p-0"
+        >
+          <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+            {children}
+          </div>
+        </SheetPopup>
+      </Sheet>
+    )
+  }
 
   return (
-    <>
-      {/* Mobile: Sheet */}
-      <div className="md:hidden">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetPopup 
-            side="left" 
-            showCloseButton={false}
-            className="w-[85vw] max-w-sm p-0"
-          >
-            <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-              {children}
-            </div>
-          </SheetPopup>
-        </Sheet>
-      </div>
-
-      {/* Desktop: Fixed sidebar */}
-      <aside
-        data-slot="app-panel"
-        data-state={open ? "open" : "closed"}
-        style={{ width: PANEL_WIDTH } as React.CSSProperties}
-        className={cn(
-          "hidden md:flex bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-20 flex-col border-r border-sidebar-border transition-transform duration-200 ease-in-out",
-          open ? "translate-x-0" : "-translate-x-full",
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </aside>
-    </>
+    <aside
+      data-slot="app-panel"
+      data-state={open ? "open" : "closed"}
+      style={{ width: PANEL_WIDTH } as React.CSSProperties}
+      className={cn(
+        "bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-20 flex flex-col border-r border-sidebar-border transition-transform duration-200 ease-in-out",
+        open ? "translate-x-0" : "-translate-x-full",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </aside>
   )
 }
 
