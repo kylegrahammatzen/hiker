@@ -161,7 +161,11 @@ function ShareButton({ trailId }: { trailId: string }) {
   );
 }
 
-function NearbyTrailRow({ trail, onSelect }: { trail: Trail; onSelect: () => void }) {
+function NearbyTrailRow({ trail, distance, onSelect }: { trail: Trail; distance: number; onSelect: () => void }) {
+  const distanceText = Number.isFinite(distance) 
+    ? distance < 0.1 ? "< 0.1 mi away" : `${distance.toFixed(1)} mi away`
+    : null;
+
   return (
     <Button
       variant="ghost"
@@ -173,11 +177,8 @@ function NearbyTrailRow({ trail, onSelect }: { trail: Trail; onSelect: () => voi
         <Badge variant="ghost" className={cn("text-[10px] px-2 py-0", difficultyColor[trail.difficulty])}>
           {difficultyLabel[trail.difficulty]}
         </Badge>
-        {trail.length !== "Varies" && (
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <RulerIcon className="size-3" />
-            {trail.length}
-          </span>
+        {distanceText && (
+          <span className="text-[10px] text-muted-foreground">{distanceText}</span>
         )}
       </div>
     </Button>
@@ -212,20 +213,20 @@ export function TrailDetail({
 
   // Sort nearby trails by distance from current trail, then by difficulty
   const DIFFICULTY_ORDER = { easy: 0, moderate: 1, hard: 2 } as const;
-  const sortedNearby = nearbyTrails?.slice().sort((a, b) => {
-    const distA = getDistance(trail, a);
-    const distB = getDistance(trail, b);
-    // If distances are meaningfully different (> 0.1 mile), sort by distance
-    if (Math.abs(distA - distB) > 0.1) return distA - distB;
-    // Otherwise sort by difficulty
-    const diffA = DIFFICULTY_ORDER[a.difficulty];
-    const diffB = DIFFICULTY_ORDER[b.difficulty];
-    if (diffA !== diffB) return diffA - diffB;
-    // Then by length
-    const lenA = parseFloat(a.length) || 0;
-    const lenB = parseFloat(b.length) || 0;
-    return lenA - lenB;
-  });
+  const sortedNearby = nearbyTrails
+    ?.map((t) => ({ trail: t, distance: getDistance(trail, t) }))
+    .sort((a, b) => {
+      // If distances are meaningfully different (> 0.1 mile), sort by distance
+      if (Math.abs(a.distance - b.distance) > 0.1) return a.distance - b.distance;
+      // Otherwise sort by difficulty
+      const diffA = DIFFICULTY_ORDER[a.trail.difficulty];
+      const diffB = DIFFICULTY_ORDER[b.trail.difficulty];
+      if (diffA !== diffB) return diffA - diffB;
+      // Then by length
+      const lenA = parseFloat(a.trail.length) || 0;
+      const lenB = parseFloat(b.trail.length) || 0;
+      return lenA - lenB;
+    });
 
   return (
     <div className="flex flex-col">
@@ -267,10 +268,11 @@ export function TrailDetail({
             <div className="flex flex-col gap-2">
               <h3 className="text-sm font-medium">More in {trail.parkName}</h3>
               <div className="-mx-2 flex flex-col">
-                {sortedNearby.map((t) => (
+                {sortedNearby.map(({ trail: t, distance }) => (
                   <NearbyTrailRow
                     key={t.id}
                     trail={t}
+                    distance={distance}
                     onSelect={() => actions.setSelectedTrailId(t.id)}
                   />
                 ))}
