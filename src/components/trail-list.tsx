@@ -1,86 +1,29 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { motion, AnimatePresence } from "motion/react";
 import { MagnifyingGlassMinusIcon, CaretRightIcon } from "@phosphor-icons/react";
-import type { Trail } from "@/lib/types";
 import { TrailCard } from "@/components/trail-card";
-import { useSelectedTrailId, useVisibleTrailIds, useTrailActions, useFocusedParkCode } from "@/lib/trail-context";
-import { Collapsible, CollapsibleTrigger, CollapsiblePanel } from "@/components/ui/collapsible";
+import { useSelectedTrailId, useTrailActions, useFocusedParkCode } from "@/lib/trail-context";
+import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-
-type ParkGroup = {
-  parkName: string;
-  parkCode: string;
-  trails: Trail[];
-};
+import { sortTrails, type ParkGroup } from "@/lib/trail-grouping";
 
 type Row =
   | { kind: "header"; group: ParkGroup }
-  | { kind: "trail"; trail: Trail; showLocation: boolean };
+  | { kind: "trail"; trail: ParkGroup["trails"][number]; parkName: string };
 
-const DIFFICULTY_ORDER = { easy: 0, moderate: 1, hard: 2 };
-
-function sortTrails(trails: Trail[]) {
-  return [...trails].sort((a, b) => {
-    const diff = DIFFICULTY_ORDER[a.difficulty] - DIFFICULTY_ORDER[b.difficulty];
-    if (diff !== 0) return diff;
-    return (parseFloat(a.length) || 0) - (parseFloat(b.length) || 0);
-  });
-}
-
-function buildRows(groups: ParkGroup[], openPark: string | null, visibleIds: Set<string>): Row[] {
-  const sorted = [...groups].sort((a, b) => b.trails.length - a.trails.length);
-  const multiGroups = sorted.filter((g) => g.trails.length > 1);
-  const singles = sorted.filter((g) => g.trails.length === 1);
-  const onlySingles = multiGroups.length === 0;
-
-  const singlesGroup: ParkGroup | null =
-    !onlySingles && singles.length > 0
-      ? { parkName: "Other Parks", parkCode: "other", trails: singles.map((g) => g.trails[0]!) }
-      : null;
-
-  const uniqueParksVisible = new Set(
-    groups.flatMap((g) => g.trails.filter((t) => visibleIds.has(t.id))).map((t) => t.parkCode)
-  );
-  const totalVisible = groups.reduce(
-    (n, g) => n + g.trails.filter((t) => visibleIds.has(t.id)).length,
-    0
-  );
-  const useFlat = visibleIds.size > 0 && (totalVisible <= 20 || uniqueParksVisible.size === 1);
-
-  if (useFlat) {
-    const flatTrails = groups
-      .flatMap((g) => g.trails)
-      .filter((t) => visibleIds.has(t.id));
-    flatTrails.sort((a, b) => {
-      const diff = DIFFICULTY_ORDER[a.difficulty] - DIFFICULTY_ORDER[b.difficulty];
-      if (diff !== 0) return diff;
-      return (parseFloat(a.length) || 0) - (parseFloat(b.length) || 0);
-    });
-    return flatTrails.map((trail) => ({
-      kind: "trail",
-      trail,
-      showLocation: uniqueParksVisible.size > 1,
-    }));
-  }
-
+function buildRows(groups: ParkGroup[], openPark: string | null): Row[] {
   const rows: Row[] = [];
-  const allGroupsToRender = singlesGroup
-    ? [...multiGroups, singlesGroup]
-    : onlySingles
-    ? sorted
-    : multiGroups;
 
-  for (const group of allGroupsToRender) {
+  for (const group of groups) {
     rows.push({ kind: "header", group });
     if (openPark === group.parkName) {
       for (const trail of sortTrails(group.trails)) {
-        rows.push({ kind: "trail", trail, showLocation: false });
+        rows.push({ kind: "trail", trail, parkName: group.parkName });
       }
     }
   }
@@ -91,61 +34,56 @@ function buildRows(groups: ParkGroup[], openPark: string | null, visibleIds: Set
 const HEADER_HEIGHT = 40;
 const TRAIL_HEIGHT = 72;
 
-export function TrailList({ groups, hideVisibleFilter = false }: { groups: ParkGroup[]; hideVisibleFilter?: boolean }) {
+export function TrailList({
+  groups,
+  hideVisibleFilter = false,
+}: {
+  groups: ParkGroup[];
+  hideVisibleFilter?: boolean;
+}) {
   const selectedId = useSelectedTrailId();
-  const visibleTrailIds = useVisibleTrailIds();
   const focusedParkCode = useFocusedParkCode();
   const actions = useTrailActions();
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  const sorted = [...groups].sort((a, b) => b.trails.length - a.trails.length);
-  const multiGroups = sorted.filter((g) => g.trails.length > 1);
-  const singles = sorted.filter((g) => g.trails.length === 1);
-  const onlySingles = multiGroups.length === 0;
-  const singlesGroup: ParkGroup | null =
-    !onlySingles && singles.length > 0
-      ? { parkName: "Other Parks", parkCode: "other", trails: singles.map((g) => g.trails[0]!) }
-      : null;
-
+  // Auto-open the first group if there's only one, or the group containing the selected trail
   const [openPark, setOpenPark] = useState<string | null>(() => {
-    if (multiGroups.length === 1) return multiGroups[0]!.parkName;
+    if (groups.length === 1) return groups[0]!.parkName;
     if (selectedId) {
-      const park = multiGroups.find((g) => g.trails.some((t) => t.id === selectedId));
+      const park = groups.find((g) => g.trails.some((t) => t.id === selectedId));
       if (park) return park.parkName;
-      if (singlesGroup?.trails.some((t) => t.id === selectedId)) return "Other Parks";
     }
     return null;
   });
 
-  const groupNames = sorted.map((g) => g.parkName).join(",");
+  // Keep openPark in sync when groups change
+  const groupKey = groups.map((g) => g.parkName).join(",");
   useEffect(() => {
     setOpenPark((prev) => {
-      if (!prev) return null;
-      if (prev === "Other Parks" && singlesGroup) return prev;
-      if (!sorted.some((g) => g.parkName === prev)) return null;
+      if (!prev) return groups.length === 1 ? groups[0]!.parkName : null;
+      if (!groups.some((g) => g.parkName === prev)) return null;
       return prev;
     });
-  }, [groupNames]);
+  }, [groupKey, groups]);
 
+  // Open the group containing the selected trail
   useEffect(() => {
     if (!selectedId) return;
-    const park = multiGroups.find((g) => g.trails.some((t) => t.id === selectedId));
-    if (park) { setOpenPark(park.parkName); return; }
-    if (singlesGroup?.trails.some((t) => t.id === selectedId)) setOpenPark("Other Parks");
-  }, [selectedId]);
+    const park = groups.find((g) => g.trails.some((t) => t.id === selectedId));
+    if (park) setOpenPark(park.parkName);
+  }, [selectedId, groups]);
 
+  // Open the focused park
   useEffect(() => {
     if (!focusedParkCode) {
-      setOpenPark(null);
+      setOpenPark(groups.length === 1 ? groups[0]!.parkName : null);
       return;
     }
-    const allGroups = [...multiGroups, ...singles];
-    const park = allGroups.find((g) => g.parkCode === focusedParkCode);
+    const park = groups.find((g) => g.parkCode === focusedParkCode);
     if (park) setOpenPark(park.parkName);
-  }, [focusedParkCode, groupNames]);
+  }, [focusedParkCode, groups]);
 
-  const visibleSet = hideVisibleFilter ? new Set<string>() : new Set(visibleTrailIds);
-  const rows = buildRows(groups, openPark, visibleSet);
+  const rows = useMemo(() => buildRows(groups, openPark), [groups, openPark]);
 
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -161,11 +99,11 @@ export function TrailList({ groups, hideVisibleFilter = false }: { groups: ParkG
       if (willOpen && group.parkCode !== "other") {
         actions.setLoadingPark(true);
         actions.setFocusedParkCode(group.parkCode);
-      } else {
+      } else if (!willOpen) {
         actions.setFocusedParkCode(null);
       }
     },
-    [openPark, actions]
+    [openPark, actions],
   );
 
   if (groups.length === 0) {
@@ -184,7 +122,10 @@ export function TrailList({ groups, hideVisibleFilter = false }: { groups: ParkG
 
   return (
     <ScrollArea viewportRef={viewportRef} scrollbarGutter className="h-full">
-      <div className="overflow-hidden" style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+      <div
+        className="overflow-hidden"
+        style={{ height: virtualizer.getTotalSize(), position: "relative" }}
+      >
         {virtualizer.getVirtualItems().map((virtualItem) => {
           const row = rows[virtualItem.index]!;
 
@@ -221,15 +162,6 @@ export function TrailList({ groups, hideVisibleFilter = false }: { groups: ParkG
                     </Badge>
                   </CollapsibleTrigger>
                 </Collapsible>
-              ) : row.showLocation ? (
-                <div className="px-3 py-0.5">
-                  <TrailCard
-                    trail={row.trail}
-                    isSelected={selectedId === row.trail.id}
-                    onSelect={() => actions.setSelectedTrailId(row.trail.id)}
-                    showLocation={row.showLocation}
-                  />
-                </div>
               ) : (
                 <div className="relative ml-[11px] flex flex-col gap-1 pl-4 py-0.5">
                   <Separator orientation="vertical" className="absolute left-0 top-0 h-full" />
@@ -237,7 +169,7 @@ export function TrailList({ groups, hideVisibleFilter = false }: { groups: ParkG
                     trail={row.trail}
                     isSelected={selectedId === row.trail.id}
                     onSelect={() => actions.setSelectedTrailId(row.trail.id)}
-                    showLocation={row.showLocation}
+                    showLocation={row.parkName === "Other Parks"}
                   />
                 </div>
               )}
