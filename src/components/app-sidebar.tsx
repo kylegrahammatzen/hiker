@@ -129,7 +129,7 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
           </div>
         ) : mapLoaded ? (
           <>
-            <p className="px-5 py-1.5 text-xs text-muted-foreground shrink-0">
+            <p className="px-2 py-1.5 text-xs text-muted-foreground shrink-0">
               {displayTrails.length} {displayTrails.length === 1 ? "trail" : "trails"} in{" "}
               {uniqueParkCount} {uniqueParkCount === 1 ? "park" : "parks"}
             </p>
