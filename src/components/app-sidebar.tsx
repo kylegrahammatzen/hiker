@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { MountainsIcon, ArrowLeftIcon } from "@phosphor-icons/react";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +10,14 @@ import { AppPanel } from "@/components/ui/app-panel";
 import { TrailList } from "@/components/trail-list";
 import { TrailDetail } from "@/components/trail-detail";
 import { Spinner } from "@/components/ui/spinner";
-import { useSelectedTrailId, useMapLoaded, useTrailActions, useVisibleTrailIds, useFocusedParkCode, useIsLoadingPark } from "@/lib/trail-context";
+import {
+  useSelectedTrailId,
+  useMapLoaded,
+  useTrailActions,
+  useVisibleTrailIds,
+  useFocusedParkCode,
+  useIsLoadingPark,
+} from "@/lib/trail-context";
 import type { Trail } from "@/lib/types";
 
 type ParkGroup = {
@@ -26,7 +33,11 @@ function groupByPark(trails: Trail[]): ParkGroup[] {
     if (existing) existing.trails.push(t);
     else map.set(t.parkName, { parkCode: t.parkCode, trails: [t] });
   }
-  return Array.from(map, ([parkName, { parkCode, trails }]) => ({ parkName, parkCode, trails }));
+  return Array.from(map, ([parkName, { parkCode, trails }]) => ({
+    parkName,
+    parkCode,
+    trails,
+  }));
 }
 
 export function AppSidebar({ trails }: { trails?: Trail[] }) {
@@ -47,10 +58,8 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
       !q ||
       t.name.toLowerCase().includes(q) ||
       t.parkName.toLowerCase().includes(q) ||
-      t.state.toLowerCase().includes(q)
+      t.state.toLowerCase().includes(q),
   );
-
-  const groups = groupByPark(filtered);
 
   const visibleSet = new Set(visibleTrailIds);
   const visibleFiltered = filtered.filter((t) => visibleSet.has(t.id));
@@ -71,15 +80,23 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
         <div className="flex items-center gap-2">
           {selectedTrail ? (
             <>
-              <Button variant="ghost" size="icon-sm" onClick={() => actions.setSelectedTrailId(null)}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => actions.setSelectedTrailId(null)}
+              >
                 <ArrowLeftIcon className="size-4" />
               </Button>
-              <span className="text-sm font-medium truncate">Back to trails</span>
+              <span className="text-sm font-medium truncate">
+                Back to trails
+              </span>
             </>
           ) : (
             <>
               <MountainsIcon className="size-5 text-primary" />
-              <span className="text-lg font-semibold tracking-tight">hiker</span>
+              <span className="text-lg font-semibold tracking-tight">
+                hiker
+              </span>
             </>
           )}
         </div>
@@ -102,7 +119,9 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
                 placeholder="Search trails..."
                 type="search"
                 value={search}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearch(e.target.value)
+                }
               />
             </InputGroup>
           </div>
@@ -115,7 +134,9 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
             <TrailDetail
               trail={selectedTrail}
               nearbyTrails={allTrails.filter(
-                (t) => t.parkName === selectedTrail.parkName && t.id !== selectedTrail.id
+                (t) =>
+                  t.parkName === selectedTrail.parkName &&
+                  t.id !== selectedTrail.id,
               )}
             />
           </ScrollArea>
@@ -130,10 +151,10 @@ export function AppSidebar({ trails }: { trails?: Trail[] }) {
               {displayGroups.length === 1 ? "park" : "parks"}
             </p>
             <div className="flex-1 min-h-0">
-              <TrailList 
-                key={focusedParkCode ?? "all"} 
-                groups={displayGroups} 
-                hideVisibleFilter={focusedParkCode === null} 
+              <TrailList
+                key={focusedParkCode ?? "all"}
+                groups={displayGroups}
+                hideVisibleFilter={focusedParkCode === null}
               />
             </div>
           </>
