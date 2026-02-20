@@ -39,7 +39,7 @@ export function MapShell({ trails, initialParkCode }: { trails: Trail[]; initial
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           <AppPanelTrigger variant="map" size="icon-sm" />
           {!isAtDefault && (
