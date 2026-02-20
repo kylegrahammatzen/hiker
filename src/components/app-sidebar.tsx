@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MountainsIcon, ArrowLeftIcon } from "@phosphor-icons/react";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +24,14 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
   const mapLoaded = useMapLoaded();
   const actions = useTrailActions();
   const visibleTrailIds = useVisibleTrailIds();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when selected trail changes
+  useEffect(() => {
+    if (selectedId && scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [selectedId]);
 
   const selectedTrail = trails.find((t) => t.id === selectedId);
   const q = search.toLowerCase();
@@ -81,7 +89,7 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
 
       <div className="flex-1 min-h-0 flex flex-col">
         {selectedTrail ? (
-          <ScrollArea className="flex-1 min-h-0">
+          <ScrollArea viewportRef={scrollRef} className="flex-1 min-h-0">
             <TrailDetail
               trail={selectedTrail}
               nearbyTrails={trails.filter(
