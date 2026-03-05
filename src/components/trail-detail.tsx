@@ -429,17 +429,11 @@ function WeatherSection({ data, loading }: { data: WeatherForecast | null; loadi
           </DialogPrimitive.Portal>
         </DialogPrimitive.Root>
       </div>
-      <div className="flex items-center gap-3 rounded-lg border p-2.5">
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-lg font-semibold tabular-nums">{today.temp}{today.unit === "F" ? "°F" : "°C"}</span>
-          <span className="text-[10px] text-muted-foreground">{today.name}</span>
-        </div>
-        <div className="flex flex-1 flex-col gap-0.5">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl font-semibold tabular-nums leading-none">{today.temp}{today.unit === "F" ? "°" : "°C"}</span>
+        <div className="flex flex-1 flex-col">
           <span className="text-xs font-medium">{today.short}</span>
-          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-            <WindIcon className="size-3" />
-            <span>{today.wind} {today.windDir}</span>
-          </div>
+          <span className="text-[11px] text-muted-foreground">{today.wind} {today.windDir}</span>
         </div>
       </div>
     </div>
