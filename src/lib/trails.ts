@@ -1,8 +1,13 @@
 import trailData from "@/data/trails.json";
+import boundaryData from "@/data/boundaries.json";
 import type { Trail } from "./types";
 
 export function getTrails(): Trail[] {
   return trailData as Trail[];
+}
+
+export function getBoundaries(): GeoJSON.FeatureCollection {
+  return boundaryData as unknown as GeoJSON.FeatureCollection;
 }
 
 export function getTrailById(id: string): Trail | undefined {

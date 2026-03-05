@@ -57,16 +57,19 @@ function slugify(text: string): string {
 }
 
 const HIKING_PARKS = [
-  // Original 30
-  "yose", "grca", "zion", "romo", "grsm", "glac", "shen", "acad",
-  "olym", "mora", "seki", "brca", "arch", "cany", "grte", "dena",
-  "jotr", "havo", "neri", "badl", "grsa", "meve", "blca", "crla",
-  "redw", "pinn", "indu", "cuva", "viis", "bibe",
-  // Additional parks
-  "yell", "ever", "bisc", "care", "cave", "chis", "cong", "deva",
-  "drto", "gaar", "jeff", "katm", "kefj", "kova", "lacl", "lavo",
-  "maca", "noca", "pefo", "sagu", "thro", "wica", "wrst", "band",
-  "gumo", "grba", "hosp", "isle", "voya", "cuga",
+  // National Parks
+  "acad", "arch", "badl", "bibe", "bisc", "blca", "brca", "cany",
+  "care", "cave", "chis", "cong", "crla", "cuva", "dena", "deva",
+  "drto", "ever", "gaar", "jeff", "glac", "glba", "grca", "grte",
+  "grba", "grsa", "grsm", "gumo", "hale", "havo", "hosp", "indu",
+  "isle", "jotr", "katm", "kefj", "kova", "lacl", "lavo", "maca",
+  "meve", "mora", "neri", "noca", "olym", "pefo", "pinn", "redw",
+  "romo", "sagu", "seki", "shen", "thro", "viis", "voya", "wica",
+  "wrst", "yell", "yose", "zion", "npsa", "wite",
+  // Monuments, Recreation Areas, and Historical Parks
+  "band", "cuga", "dino", "crmo", "orca", "colm", "cach", "moja",
+  "orpi", "gicl", "cebr", "nabr", "deto", "scbl", "agfo", "flfo",
+  "colo", "gett",
 ] as const;
 
 function estimateDifficulty(
@@ -169,17 +172,35 @@ async function fetchParks(): Promise<NPSPark[]> {
 }
 
 async function fetchThingsToDo(parkCode: string): Promise<NPSThingToDo[]> {
-  const url = `${NPS_BASE}/thingstodo?parkCode=${parkCode}&limit=50&api_key=${NPS_API_KEY}`;
-  const json = await fetchWithRetry<NPSResponse<NPSThingToDo>>(url);
-  return json?.data ?? [];
+  const allThings: NPSThingToDo[] = [];
+  let start = 0;
+  const limit = 50;
+
+  // Paginate to get all things to do (some parks have 100+)
+  while (true) {
+    const url = `${NPS_BASE}/thingstodo?parkCode=${parkCode}&limit=${limit}&start=${start}&api_key=${NPS_API_KEY}`;
+    const json = await fetchWithRetry<NPSResponse<NPSThingToDo>>(url);
+    if (!json?.data || json.data.length === 0) break;
+    allThings.push(...json.data);
+    if (json.data.length < limit) break;
+    start += limit;
+    await Bun.sleep(500);
+  }
+
+  return allThings;
 }
 
+const HIKING_ACTIVITIES = new Set([
+  "Hiking",
+  "Front-Country Hiking",
+  "Backpacking",
+  "Day Hiking",
+  "Extended Hiking",
+  "Walking",
+]);
+
 function isHikingActivity(activity: NPSActivity): boolean {
-  return (
-    activity.name === "Hiking" ||
-    activity.name === "Front-Country Hiking" ||
-    activity.name === "Backpacking"
-  );
+  return HIKING_ACTIVITIES.has(activity.name);
 }
 
 async function collectImages(
@@ -315,15 +336,15 @@ async function main() {
     return;
   }
 
-  console.log("Fetching parks from NPS API...");
+  console.log(`Fetching ${HIKING_PARKS.length} parks from NPS API...`);
   const parks = await fetchParks();
-  console.log(`Got ${parks.length} parks`);
+  console.log(`Fetched ${parks.length} parks\n`);
 
   const seen = new Set<string>();
   const trails: Trail[] = [];
 
   for (const park of parks) {
-    console.log(`Fetching things to do for ${park.fullName}...`);
+    const before = trails.length;
     await Bun.sleep(1000);
 
     const things = await fetchThingsToDo(park.parkCode);
@@ -332,7 +353,7 @@ async function main() {
     );
 
     if (hikingThings.length > 0) {
-      for (const hike of hikingThings.slice(0, 10)) {
+      for (const hike of hikingThings.slice(0, 20)) {
         const trail = await buildTrailFromHike(hike, park);
         if (trail && !seen.has(trail.id)) {
           seen.add(trail.id);
@@ -349,9 +370,12 @@ async function main() {
         }
       }
     }
+
+    const added = trails.length - before;
+    console.log(`[${park.parkCode}] ${park.fullName} — ${things.length} activities, ${hikingThings.length} hiking, ${added} trails added`);
   }
 
-  console.log(`\nTotal trails collected: ${trails.length}`);
+  console.log(`\nTotal: ${trails.length} trails across ${new Set(trails.map(t => t.parkCode)).size} parks`);
 
   await Bun.write(outputPath, JSON.stringify(trails, null, 2));
   console.log(`Written to ${outputPath}`);

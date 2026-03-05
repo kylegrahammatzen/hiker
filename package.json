@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "fetch": "bun run scripts/fetch-nps-trails.ts",
-    "fetch:quick": "bun run scripts/fetch-nps-trails.ts --quick"
+    "fetch:quick": "bun run scripts/fetch-nps-trails.ts --quick",
+    "fetch:boundaries": "bun run scripts/fetch-nps-boundaries.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
