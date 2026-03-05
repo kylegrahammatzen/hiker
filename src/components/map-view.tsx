@@ -118,7 +118,11 @@ function addBoundaryLayers(map: maplibregl.Map, boundaries: GeoJSON.FeatureColle
       id: "boundaries-fill",
       type: "fill",
       source: "boundaries",
-      paint: { "fill-color": fillColor },
+      minzoom: 7,
+      paint: {
+        "fill-color": fillColor,
+        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0, 8, 1],
+      },
     });
   }
 
@@ -127,7 +131,12 @@ function addBoundaryLayers(map: maplibregl.Map, boundaries: GeoJSON.FeatureColle
       id: "boundaries-outline",
       type: "line",
       source: "boundaries",
-      paint: { "line-color": lineColor, "line-width": 1.5 },
+      minzoom: 7,
+      paint: {
+        "line-color": lineColor,
+        "line-width": 1.5,
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0, 8, 1],
+      },
     });
   }
 
