@@ -20,8 +20,19 @@ import {
   CheckIcon,
   ImageBrokenIcon,
   XIcon,
+  CloudSunIcon,
+  PawPrintIcon,
+  WarningIcon,
+  WindIcon,
+  ThermometerIcon,
+  InfoIcon,
 } from "@phosphor-icons/react";
 import type { TrailImage as TrailImageType } from "@/lib/types";
+import { useWeather, useWildlife, useAlerts } from "@/hooks/use-trail-data";
+import type { WeatherForecast } from "@/app/api/weather/route";
+import type { WildlifeData, WildlifeSpecies } from "@/app/api/wildlife/route";
+import type { AlertsData, ParkAlert } from "@/app/api/alerts/route";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const difficultyColor = {
   easy: "bg-success/16 text-success-foreground",
@@ -279,6 +290,187 @@ function ShareButton({ trailId }: { trailId: string }) {
   );
 }
 
+function AlertBanner({ alert }: { alert: ParkAlert }) {
+  const styles: Record<string, string> = {
+    Danger: "border-destructive/30 bg-destructive/8 text-destructive-foreground",
+    "Park Closure": "border-destructive/30 bg-destructive/8 text-destructive-foreground",
+    Caution: "border-warning/30 bg-warning/8 text-warning-foreground",
+    Information: "border-border bg-muted text-muted-foreground",
+  };
+
+  const icons: Record<string, typeof WarningIcon> = {
+    Danger: WarningIcon,
+    "Park Closure": WarningIcon,
+    Caution: WarningIcon,
+    Information: InfoIcon,
+  };
+
+  const Icon = icons[alert.category] ?? InfoIcon;
+
+  return (
+    <div className={cn("flex gap-2 rounded-lg border p-2.5", styles[alert.category])}>
+      <Icon className="mt-0.5 size-4 shrink-0" weight="fill" />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-xs font-semibold leading-tight">{alert.title}</span>
+        <span className="text-[11px] leading-snug opacity-80 line-clamp-3">{alert.description}</span>
+      </div>
+    </div>
+  );
+}
+
+function AlertsSection({ data, loading }: { data: AlertsData | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <WarningIcon className="size-4" />
+          Alerts
+        </h3>
+        <Skeleton className="h-16 w-full rounded-lg" />
+      </div>
+    );
+  }
+
+  if (!data?.alerts.length) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="flex items-center gap-1.5 text-sm font-medium">
+        <WarningIcon className="size-4" />
+        Alerts
+        <Badge variant="ghost" className="bg-destructive/16 text-destructive-foreground text-[10px] px-1.5 py-0">
+          {data.alerts.length}
+        </Badge>
+      </h3>
+      <div className="flex flex-col gap-1.5">
+        {data.alerts.slice(0, 3).map((alert) => (
+          <AlertBanner key={alert.id} alert={alert} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WeatherSection({ data, loading }: { data: WeatherForecast | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <CloudSunIcon className="size-4" />
+          Weather
+        </h3>
+        <div className="flex gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 flex-1 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data?.periods.length) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="flex items-center gap-1.5 text-sm font-medium">
+        <CloudSunIcon className="size-4" />
+        Weather
+        {data.elevation && (
+          <span className="text-[10px] font-normal text-muted-foreground">
+            {data.elevation.value.toLocaleString()} ft elev.
+          </span>
+        )}
+      </h3>
+      <div className="grid grid-cols-3 gap-1.5">
+        {data.periods.slice(0, 6).map((period) => (
+          <div
+            key={period.name}
+            className={cn(
+              "flex flex-col items-center gap-1 rounded-lg border p-2 text-center",
+              period.isDaytime ? "bg-background" : "bg-muted/50"
+            )}
+          >
+            <span className="text-[10px] font-medium text-muted-foreground leading-tight">{period.name}</span>
+            <div className="flex items-center gap-0.5">
+              <ThermometerIcon className="size-3 text-muted-foreground" />
+              <span className="text-sm font-semibold tabular-nums">{period.temp}°{period.unit}</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{period.short}</span>
+            <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+              <WindIcon className="size-3" />
+              <span>{period.wind}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WildlifeSection({ data, loading }: { data: WildlifeData | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <PawPrintIcon className="size-4" />
+          Wildlife Nearby
+        </h3>
+        <div className="flex flex-col gap-1.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-full rounded-md" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data?.species.length) return null;
+
+  const grouped = new Map<string, WildlifeSpecies[]>();
+  for (const s of data.species) {
+    const group = grouped.get(s.group) ?? [];
+    group.push(s);
+    grouped.set(s.group, group);
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="flex items-center gap-1.5 text-sm font-medium">
+        <PawPrintIcon className="size-4" />
+        Wildlife Nearby
+        <span className="ml-auto text-[10px] font-normal text-muted-foreground tabular-nums">
+          {data.totalObservations.toLocaleString()} obs.
+        </span>
+      </h3>
+      <div className="flex flex-col gap-3">
+        {Array.from(grouped.entries()).map(([group, species]) => (
+          <div key={group} className="flex flex-col gap-1">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{group}</span>
+            <div className="flex flex-wrap gap-1">
+              {species.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px]"
+                >
+                  {s.photoUrl && (
+                    <img
+                      src={s.photoUrl}
+                      alt=""
+                      className="size-3.5 rounded-sm object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  {s.commonName}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function NearbyTrailRow({ trail, distance, onSelect }: { trail: Trail; distance: number; onSelect: () => void }) {
   const distanceText = Number.isFinite(distance) 
     ? distance < 0.1 ? "< 0.1 mi away" : `${distance.toFixed(1)} mi away`
@@ -329,18 +521,18 @@ export function TrailDetail({
 }) {
   const actions = useTrailActions();
 
-  // Sort nearby trails by distance from current trail, then by difficulty
+  const alerts = useAlerts(trail.parkCode);
+  const weather = useWeather(trail.coordinates?.lat, trail.coordinates?.lng);
+  const wildlife = useWildlife(trail.coordinates?.lat, trail.coordinates?.lng);
+
   const DIFFICULTY_ORDER = { easy: 0, moderate: 1, hard: 2 } as const;
   const sortedNearby = nearbyTrails
     ?.map((t) => ({ trail: t, distance: getDistance(trail, t) }))
     .sort((a, b) => {
-      // If distances are meaningfully different (> 0.1 mile), sort by distance
       if (Math.abs(a.distance - b.distance) > 0.1) return a.distance - b.distance;
-      // Otherwise sort by difficulty
       const diffA = DIFFICULTY_ORDER[a.trail.difficulty];
       const diffB = DIFFICULTY_ORDER[b.trail.difficulty];
       if (diffA !== diffB) return diffA - diffB;
-      // Then by length
       const lenA = parseFloat(a.trail.length) || 0;
       const lenB = parseFloat(b.trail.length) || 0;
       return lenA - lenB;
@@ -379,6 +571,14 @@ export function TrailDetail({
           </div>
           <ShareButton trailId={trail.id} />
         </div>
+
+        <AlertsSection data={alerts.data} loading={alerts.loading} />
+
+        <Separator />
+
+        <WeatherSection data={weather.data} loading={weather.loading} />
+
+        <WildlifeSection data={wildlife.data} loading={wildlife.loading} />
 
         {sortedNearby && sortedNearby.length > 0 && (
           <>
