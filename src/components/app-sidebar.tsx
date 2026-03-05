@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppPanel } from "@/components/ui/app-panel";
+import { Tabs, TabsList, TabsIndicator, TabsTrigger } from "@/components/ui/tabs";
 import { TrailList } from "@/components/trail-list";
 import { TrailDetail } from "@/components/trail-detail";
 import {
@@ -14,8 +15,9 @@ import {
   useMapLoaded,
   useTrailActions,
   useVisibleTrailIds,
+  useGroupMode,
 } from "@/lib/trail-context";
-import { groupByPark, computeDisplayGroups } from "@/lib/trail-grouping";
+import { groupTrails, computeDisplayGroups, type GroupMode } from "@/lib/trail-grouping";
 import type { Trail } from "@/lib/types";
 
 export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
@@ -24,6 +26,7 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
   const mapLoaded = useMapLoaded();
   const actions = useTrailActions();
   const visibleTrailIds = useVisibleTrailIds();
+  const groupMode = useGroupMode();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Scroll to top when selected trail changes
@@ -50,7 +53,7 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
     ? filtered.filter((t) => visibleSet.has(t.id))
     : filtered;
 
-  const { allGroups, uniqueParkCount } = computeDisplayGroups(groupByPark(displayTrails));
+  const { allGroups, uniqueParkCount } = computeDisplayGroups(groupTrails(displayTrails, groupMode));
 
   return (
     <AppPanel>
@@ -101,12 +104,24 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
           </ScrollArea>
         ) : mapLoaded ? (
           <>
-            <p className="px-2 py-1.5 text-xs text-muted-foreground shrink-0">
-              {displayTrails.length} {displayTrails.length === 1 ? "trail" : "trails"} in{" "}
-              {uniqueParkCount} {uniqueParkCount === 1 ? "park" : "parks"}
-            </p>
+            <div className="flex items-center justify-between px-2 py-1.5 shrink-0">
+              <p className="text-xs text-muted-foreground">
+                {displayTrails.length} {displayTrails.length === 1 ? "trail" : "trails"} in{" "}
+                {uniqueParkCount} {groupMode === "state" ? (uniqueParkCount === 1 ? "state" : "states") : (uniqueParkCount === 1 ? "park" : "parks")}
+              </p>
+              <Tabs
+                defaultValue="state"
+                onValueChange={(value) => actions.setGroupMode(value as GroupMode)}
+              >
+                <TabsList>
+                  <TabsTrigger value="state">State</TabsTrigger>
+                  <TabsTrigger value="park">Park</TabsTrigger>
+                  <TabsIndicator />
+                </TabsList>
+              </Tabs>
+            </div>
             <div className="flex-1 min-h-0">
-              <TrailList groups={allGroups} />
+              <TrailList groups={allGroups} groupMode={groupMode} />
             </div>
           </>
         ) : (

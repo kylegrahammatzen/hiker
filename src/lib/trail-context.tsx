@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useReducer, useEffect, use } from "react";
+import type { GroupMode } from "./trail-grouping";
 
 type State = {
   selectedTrailId: string | null;
@@ -9,6 +10,7 @@ type State = {
   focusedParkCode: string | null;
   resetSignal: number;
   isLoadingPark: boolean;
+  groupMode: GroupMode;
 };
 
 type Action =
@@ -17,7 +19,8 @@ type Action =
   | { type: "SET_MAP_LOADED" }
   | { type: "SET_FOCUSED_PARK"; code: string | null }
   | { type: "RESET_VIEW" }
-  | { type: "SET_LOADING_PARK"; loading: boolean };
+  | { type: "SET_LOADING_PARK"; loading: boolean }
+  | { type: "SET_GROUP_MODE"; mode: GroupMode };
 
 type Actions = {
   setSelectedTrailId: (id: string | null) => void;
@@ -26,6 +29,7 @@ type Actions = {
   setFocusedParkCode: (code: string | null) => void;
   resetView: () => void;
   setLoadingPark: (loading: boolean) => void;
+  setGroupMode: (mode: GroupMode) => void;
 };
 
 function readHash(): string | null {
@@ -60,6 +64,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, selectedTrailId: null, focusedParkCode: null, resetSignal: state.resetSignal + 1, isLoadingPark: false };
     case "SET_LOADING_PARK":
       return { ...state, isLoadingPark: action.loading };
+    case "SET_GROUP_MODE":
+      return { ...state, groupMode: action.mode };
   }
 }
 
@@ -70,6 +76,7 @@ const initialState: State = {
   focusedParkCode: null,
   resetSignal: 0,
   isLoadingPark: false,
+  groupMode: "state",
 };
 
 const StateContext = createContext<State>(initialState);
@@ -112,6 +119,9 @@ export function TrailProvider({ children }: { children: React.ReactNode }) {
     },
     setLoadingPark(loading) {
       dispatch({ type: "SET_LOADING_PARK", loading });
+    },
+    setGroupMode(mode) {
+      dispatch({ type: "SET_GROUP_MODE", mode });
     },
   };
 
@@ -156,4 +166,8 @@ export function useResetSignal() {
 
 export function useIsLoadingPark() {
   return use(StateContext).isLoadingPark;
+}
+
+export function useGroupMode() {
+  return use(StateContext).groupMode;
 }

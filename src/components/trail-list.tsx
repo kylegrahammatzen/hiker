@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { sortTrails, type ParkGroup } from "@/lib/trail-grouping";
+import { sortTrails, type ParkGroup, type GroupMode } from "@/lib/trail-grouping";
 
 type Row =
   | { kind: "header"; group: ParkGroup }
@@ -34,7 +34,7 @@ function buildRows(groups: ParkGroup[], openPark: string | null): Row[] {
 const HEADER_HEIGHT = 40;
 const TRAIL_HEIGHT = 72;
 
-export function TrailList({ groups }: { groups: ParkGroup[] }) {
+export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]; groupMode?: GroupMode }) {
   const selectedId = useSelectedTrailId();
   const actions = useTrailActions();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -148,7 +148,7 @@ export function TrailList({ groups }: { groups: ParkGroup[] }) {
                     trail={row.trail}
                     isSelected={selectedId === row.trail.id}
                     onSelect={() => actions.setSelectedTrailId(row.trail.id)}
-                    showLocation={row.parkName === "Other Parks"}
+                    showLocation={groupMode === "state"}
                   />
                 </div>
               )}
