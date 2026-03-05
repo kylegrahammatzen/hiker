@@ -6,6 +6,7 @@ import "./globals.css";
 import { AppPanelProvider, AppPanelInset } from "@/components/ui/app-panel";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TrailProvider } from "@/lib/trail-context";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { getTrails } from "@/lib/trails";
 
 const geistSans = Geist({
@@ -36,12 +37,14 @@ export default function RootLayout({
         <CSPProvider disableStyleElements>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <TrailProvider>
-              <AppPanelProvider defaultOpen={true}>
-                <AppSidebar trails={trails} />
-                <AppPanelInset className="h-svh overflow-hidden">
-                  {children}
-                </AppPanelInset>
-              </AppPanelProvider>
+              <TooltipProvider delay={400} closeDelay={0}>
+                <AppPanelProvider defaultOpen={true}>
+                  <AppSidebar trails={trails} />
+                  <AppPanelInset className="h-svh overflow-hidden">
+                    {children}
+                  </AppPanelInset>
+                </AppPanelProvider>
+              </TooltipProvider>
             </TrailProvider>
           </ThemeProvider>
         </CSPProvider>
