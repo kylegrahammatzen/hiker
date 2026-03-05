@@ -351,7 +351,31 @@ function AlertsSection({ data, loading }: { data: AlertsData | null; loading: bo
   );
 }
 
+function WeatherPeriodCard({ period }: { period: WeatherForecast["periods"][number] }) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center gap-1 rounded-lg border p-2 text-center",
+        period.isDaytime ? "bg-background" : "bg-muted/50"
+      )}
+    >
+      <span className="text-[10px] font-medium text-muted-foreground leading-tight">{period.name}</span>
+      <div className="flex items-center gap-0.5">
+        <ThermometerIcon className="size-3 text-muted-foreground" />
+        <span className="text-sm font-semibold tabular-nums">{period.temp}{period.unit === "F" ? "°F" : "°C"}</span>
+      </div>
+      <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{period.short}</span>
+      <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+        <WindIcon className="size-3" />
+        <span>{period.wind}</span>
+      </div>
+    </div>
+  );
+}
+
 function WeatherSection({ data, loading }: { data: WeatherForecast | null; loading: boolean }) {
+  const [open, setOpen] = useState(false);
+
   if (loading) {
     return (
       <div className="flex flex-col gap-2">
@@ -359,55 +383,92 @@ function WeatherSection({ data, loading }: { data: WeatherForecast | null; loadi
           <CloudSunIcon className="size-4" />
           Weather
         </h3>
-        <div className="flex gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 flex-1 rounded-lg" />
-          ))}
-        </div>
+        <Skeleton className="h-20 w-full rounded-lg" />
       </div>
     );
   }
 
   if (!data?.periods.length) return null;
 
+  const today = data.periods[0]!;
+
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="flex items-center gap-1.5 text-sm font-medium">
-        <CloudSunIcon className="size-4" />
-        Weather
-        {data.elevation && (
-          <span className="text-[10px] font-normal text-muted-foreground">
-            {data.elevation.value.toLocaleString()} ft elev.
-          </span>
-        )}
-      </h3>
-      <div className="grid grid-cols-3 gap-1.5">
-        {data.periods.slice(0, 6).map((period) => (
-          <div
-            key={period.name}
-            className={cn(
-              "flex flex-col items-center gap-1 rounded-lg border p-2 text-center",
-              period.isDaytime ? "bg-background" : "bg-muted/50"
-            )}
+      <div className="flex items-center justify-between">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <CloudSunIcon className="size-4" />
+          Weather
+        </h3>
+        <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+          <DialogPrimitive.Trigger
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            <span className="text-[10px] font-medium text-muted-foreground leading-tight">{period.name}</span>
-            <div className="flex items-center gap-0.5">
-              <ThermometerIcon className="size-3 text-muted-foreground" />
-              <span className="text-sm font-semibold tabular-nums">{period.temp}°{period.unit}</span>
-            </div>
-            <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{period.short}</span>
-            <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-              <WindIcon className="size-3" />
-              <span>{period.wind}</span>
-            </div>
+            View more
+          </DialogPrimitive.Trigger>
+          <DialogPrimitive.Portal>
+            <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+            <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-4">
+              <DialogPrimitive.Popup className="relative w-full max-w-sm overflow-hidden rounded-xl border bg-background shadow-xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95">
+                <div className="flex items-center justify-between border-b px-4 py-3">
+                  <DialogPrimitive.Title className="text-sm font-semibold">Forecast</DialogPrimitive.Title>
+                  <DialogPrimitive.Close
+                    aria-label="Close"
+                    render={<Button size="icon-sm" variant="ghost" className="rounded-full" />}
+                  >
+                    <XIcon />
+                  </DialogPrimitive.Close>
+                </div>
+                <DialogPrimitive.Description className="sr-only">Extended weather forecast</DialogPrimitive.Description>
+                <div className="grid grid-cols-2 gap-1.5 p-4">
+                  {data.periods.map((period) => (
+                    <WeatherPeriodCard key={period.name} period={period} />
+                  ))}
+                </div>
+              </DialogPrimitive.Popup>
+            </DialogPrimitive.Viewport>
+          </DialogPrimitive.Portal>
+        </DialogPrimitive.Root>
+      </div>
+      <div className="flex items-center gap-3 rounded-lg border p-2.5">
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-lg font-semibold tabular-nums">{today.temp}{today.unit === "F" ? "°F" : "°C"}</span>
+          <span className="text-[10px] text-muted-foreground">{today.name}</span>
+        </div>
+        <div className="flex flex-1 flex-col gap-0.5">
+          <span className="text-xs font-medium">{today.short}</span>
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <WindIcon className="size-3" />
+            <span>{today.wind} {today.windDir}</span>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
 }
 
+function titleCase(str: string) {
+  return str.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function SpeciesChip({ species }: { species: WildlifeSpecies }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px]">
+      {species.photoUrl && (
+        <img
+          src={species.photoUrl}
+          alt=""
+          className="size-3.5 rounded-sm object-cover"
+          loading="lazy"
+        />
+      )}
+      {titleCase(species.commonName)}
+    </span>
+  );
+}
+
 function WildlifeSection({ data, loading }: { data: WildlifeData | null; loading: boolean }) {
+  const [open, setOpen] = useState(false);
+
   if (loading) {
     return (
       <div className="flex flex-col gap-2">
@@ -415,9 +476,9 @@ function WildlifeSection({ data, loading }: { data: WildlifeData | null; loading
           <PawPrintIcon className="size-4" />
           Wildlife Nearby
         </h3>
-        <div className="flex flex-col gap-1.5">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-8 w-full rounded-md" />
+        <div className="flex gap-1.5">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-6 w-24 rounded-md" />
           ))}
         </div>
       </div>
@@ -425,6 +486,8 @@ function WildlifeSection({ data, loading }: { data: WildlifeData | null; loading
   }
 
   if (!data?.species.length) return null;
+
+  const preview = data.species.slice(0, 3);
 
   const grouped = new Map<string, WildlifeSpecies[]>();
   for (const s of data.species) {
@@ -435,36 +498,51 @@ function WildlifeSection({ data, loading }: { data: WildlifeData | null; loading
 
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="flex items-center gap-1.5 text-sm font-medium">
-        <PawPrintIcon className="size-4" />
-        Wildlife Nearby
-        <span className="ml-auto text-[10px] font-normal text-muted-foreground tabular-nums">
-          {data.totalObservations.toLocaleString()} obs.
-        </span>
-      </h3>
-      <div className="flex flex-col gap-3">
-        {Array.from(grouped.entries()).map(([group, species]) => (
-          <div key={group} className="flex flex-col gap-1">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{group}</span>
-            <div className="flex flex-wrap gap-1">
-              {species.map((s) => (
-                <span
-                  key={s.id}
-                  className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px]"
-                >
-                  {s.photoUrl && (
-                    <img
-                      src={s.photoUrl}
-                      alt=""
-                      className="size-3.5 rounded-sm object-cover"
-                      loading="lazy"
-                    />
-                  )}
-                  {s.commonName}
-                </span>
-              ))}
-            </div>
-          </div>
+      <div className="flex items-center justify-between">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <PawPrintIcon className="size-4" />
+          Wildlife Nearby
+        </h3>
+        <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+          <DialogPrimitive.Trigger
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            View more
+          </DialogPrimitive.Trigger>
+          <DialogPrimitive.Portal>
+            <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+            <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-4">
+              <DialogPrimitive.Popup className="relative w-full max-w-sm max-h-[70vh] overflow-hidden rounded-xl border bg-background shadow-xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95">
+                <div className="flex items-center justify-between border-b px-4 py-3">
+                  <DialogPrimitive.Title className="text-sm font-semibold">Wildlife Nearby</DialogPrimitive.Title>
+                  <DialogPrimitive.Close
+                    aria-label="Close"
+                    render={<Button size="icon-sm" variant="ghost" className="rounded-full" />}
+                  >
+                    <XIcon />
+                  </DialogPrimitive.Close>
+                </div>
+                <DialogPrimitive.Description className="sr-only">Species observed near this trail</DialogPrimitive.Description>
+                <div className="overflow-y-auto p-4 flex flex-col gap-3 max-h-[calc(70vh-3.25rem)]">
+                  {Array.from(grouped.entries()).map(([group, species]) => (
+                    <div key={group} className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{group}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {species.map((s) => (
+                          <SpeciesChip key={s.id} species={s} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </DialogPrimitive.Popup>
+            </DialogPrimitive.Viewport>
+          </DialogPrimitive.Portal>
+        </DialogPrimitive.Root>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {preview.map((s) => (
+          <SpeciesChip key={s.id} species={s} />
         ))}
       </div>
     </div>
