@@ -3,11 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { CSPProvider } from "@base-ui/react/csp-provider";
 import "./globals.css";
-import { AppPanelProvider, AppPanelInset } from "@/components/ui/app-panel";
-import { AppSidebar } from "@/components/app-sidebar";
 import { TrailProvider } from "@/lib/trail-context";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { getTrails } from "@/lib/trails";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +26,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const trails = getTrails();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -38,12 +33,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <TrailProvider>
               <TooltipProvider delay={400} closeDelay={0}>
-                <AppPanelProvider defaultOpen={true}>
-                  <AppSidebar trails={trails} />
-                  <AppPanelInset className="h-svh overflow-hidden">
-                    {children}
-                  </AppPanelInset>
-                </AppPanelProvider>
+                {children}
               </TooltipProvider>
             </TrailProvider>
           </ThemeProvider>
