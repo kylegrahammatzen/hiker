@@ -621,13 +621,30 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     applyGroupMode(map, trails, groupMode, state.current.isDark);
   }, [groupMode, trails]);
 
-  // Selection
+  // Selection — hide unrelated layers when a trail is selected
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
     if (!map.getLayer("trails-selected")) return;
 
+    const hiddenWhenSelected = [
+      "trails-clusters",
+      "trails-cluster-count",
+      "trails-unclustered",
+      "boundaries-fill",
+      "boundaries-outline",
+      "us-states-outline",
+      "spiderfy-points",
+      "spiderfy-legs",
+    ];
+
     if (selectedId) {
+      for (const layer of hiddenWhenSelected) {
+        if (map.getLayer(layer)) map.setLayoutProperty(layer, "visibility", "none");
+      }
+      clearSpiderfy(map);
+      state.current.spiderfied = false;
+
       map.setFilter("trails-selected", ["==", ["get", "id"], selectedId]);
       const trail = trails.find((t) => t.id === selectedId);
       if (trail) {
@@ -642,6 +659,16 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
         });
       }
     } else {
+      for (const layer of hiddenWhenSelected) {
+        if (!map.getLayer(layer)) continue;
+        // State outlines are controlled by group mode, restore accordingly
+        if (layer === "us-states-outline") {
+          map.setLayoutProperty(layer, "visibility", state.current.groupMode === "state" ? "visible" : "none");
+        } else {
+          map.setLayoutProperty(layer, "visibility", "visible");
+        }
+      }
+
       map.setFilter("trails-selected", ["==", ["get", "id"], ""]);
       if (map.getLayer("boundaries-selected-fill")) {
         const parkFilter = focusedParkCode
