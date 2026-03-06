@@ -7,6 +7,7 @@ import type { Trail } from "@/lib/types";
 import { useSelectedTrailId, useResetSignal, useFocusedParkCode, useTrailActions, useGroupMode } from "@/lib/trail-context";
 import type { GroupMode } from "@/lib/trail-grouping";
 import { Skeleton } from "@/components/ui/skeleton";
+import usStates from "@/data/us-states.json";
 
 type MapViewProps = {
   trails: Trail[];
@@ -250,6 +251,31 @@ function addTrailLayers(map: maplibregl.Map, trails: Trail[], isDark: boolean) {
   }
 }
 
+function addStateLayers(map: maplibregl.Map, isDark: boolean) {
+  if (!map.getSource("us-states")) {
+    map.addSource("us-states", {
+      type: "geojson",
+      data: usStates as unknown as GeoJSON.FeatureCollection,
+    });
+  }
+
+  if (!map.getLayer("us-states-outline")) {
+    map.addLayer(
+      {
+        id: "us-states-outline",
+        type: "line",
+        source: "us-states",
+        paint: {
+          "line-color": isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)",
+          "line-width": 1,
+        },
+        layout: { visibility: "none" },
+      },
+      "trails-clusters",
+    );
+  }
+}
+
 function applyGroupMode(map: maplibregl.Map, trails: Trail[], mode: GroupMode, isDark: boolean) {
   if (!map.getLayer("trails-unclustered")) return;
   const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
@@ -261,6 +287,10 @@ function applyGroupMode(map: maplibregl.Map, trails: Trail[], mode: GroupMode, i
   } else {
     map.setPaintProperty("trails-unclustered", "circle-color", colors.unclustered);
     map.setPaintProperty("trails-unclustered", "circle-stroke-color", colors.unclusteredStroke);
+  }
+
+  if (map.getLayer("us-states-outline")) {
+    map.setLayoutProperty("us-states-outline", "visibility", mode === "state" ? "visible" : "none");
   }
 }
 
@@ -431,8 +461,10 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       actions.setMapLoaded();
       addBoundaryLayers(map, s.boundaries, s.isDark);
       addTrailLayers(map, s.trails, s.isDark);
+      addStateLayers(map, s.isDark);
       addSpiderfyLayers(map, s.isDark);
       applyGroupMode(map, s.trails, s.groupMode, s.isDark);
+
 
       map.on("click", "trails-clusters", async (e) => {
         const feature = e.features?.[0];
@@ -551,6 +583,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     map.on("style.load", () => {
       addBoundaryLayers(map, s.boundaries, s.isDark);
       addTrailLayers(map, s.trails, s.isDark);
+      addStateLayers(map, s.isDark);
       addSpiderfyLayers(map, s.isDark);
       applyGroupMode(map, s.trails, s.groupMode, s.isDark);
       if (s.selectedId) {
