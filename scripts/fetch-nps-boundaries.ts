@@ -1,5 +1,26 @@
 import { join } from "path";
 
+function getArgValue(flag: string): string | null {
+  const prefix = `--${flag}=`;
+  const arg = process.argv.find((value) => value.startsWith(prefix));
+  return arg ? arg.slice(prefix.length) : null;
+}
+
+function parsePositiveInt(value: string | null, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parsePositiveFloat(value: string | null, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const BATCH_SIZE = parsePositiveInt(getArgValue("batch-size"), 20);
+const SIMPLIFY_TOLERANCE = parsePositiveFloat(getArgValue("tolerance"), 0.001);
+
 const FEATURE_SERVER =
   "https://services1.arcgis.com/fBc8EJBxQRMcHlei/ArcGIS/rest/services/NPS_Land_Resources_Division_Boundary_and_Tract_Data_Service/FeatureServer";
 
@@ -55,28 +76,61 @@ function douglasPeucker(points: number[][], epsilon: number): number[][] {
   return [points[0]!, points[points.length - 1]!];
 }
 
-// ~0.001 degrees is roughly 100m tolerance
-const SIMPLIFY_TOLERANCE = 0.001;
+function samePoint(a: number[] | undefined, b: number[] | undefined): boolean {
+  if (!a || !b) return false;
+  return a[0] === b[0] && a[1] === b[1];
+}
 
-function simplifyRing(ring: number[][]): number[][] {
-  const simplified = douglasPeucker(ring, SIMPLIFY_TOLERANCE);
-  return simplified.map(roundCoord);
+function ensureClosedRing(ring: number[][]): number[][] {
+  if (ring.length === 0) return ring;
+  const first = ring[0]!;
+  const last = ring[ring.length - 1]!;
+  if (samePoint(first, last)) return ring;
+  return [...ring, [first[0]!, first[1]!]];
+}
+
+function simplifyRing(ring: number[][]): number[][] | null {
+  if (ring.length < 4) return null;
+
+  const closed = ensureClosedRing(ring);
+  const simplified = douglasPeucker(closed, SIMPLIFY_TOLERANCE);
+  const reclosed = ensureClosedRing(simplified).map(roundCoord);
+
+   if (reclosed.length >= 4) return reclosed;
+
+  const fallback = ensureClosedRing(ring).map(roundCoord);
+  return fallback.length >= 4 ? fallback : null;
 }
 
 function simplifyGeometry(
   geometry: ArcGISFeature["geometry"]
-): ArcGISFeature["geometry"] {
+): ArcGISFeature["geometry"] | null {
   if (geometry.type === "Polygon") {
+    const rings = (geometry.coordinates as number[][][])
+      .map(simplifyRing)
+      .filter((ring): ring is number[][] => ring !== null);
+
+    if (rings.length === 0) return null;
+
     return {
       type: "Polygon",
-      coordinates: (geometry.coordinates as number[][][]).map(simplifyRing),
+      coordinates: rings,
     };
   }
+
+  const polygons = (geometry.coordinates as number[][][][])
+    .map((polygon) =>
+      polygon
+        .map(simplifyRing)
+        .filter((ring): ring is number[][] => ring !== null),
+    )
+    .filter((polygon) => polygon.length > 0);
+
+  if (polygons.length === 0) return null;
+
   return {
     type: "MultiPolygon",
-    coordinates: (geometry.coordinates as number[][][][]).map((polygon) =>
-      polygon.map(simplifyRing)
-    ),
+    coordinates: polygons,
   };
 }
 
@@ -122,30 +176,40 @@ async function fetchBoundaries(parkCodes: string[]): Promise<ArcGISGeoJSON> {
   return (await res.json()) as ArcGISGeoJSON;
 }
 
-async function main() {
-  // Import the park codes from the trails script dynamically
-  const trailsScript = await Bun.file(
-    join(import.meta.dir, "fetch-nps-trails.ts")
-  ).text();
-  const match = trailsScript.match(
-    /const HIKING_PARKS\s*=\s*\[([\s\S]*?)\]\s*as\s*const/
-  );
-  if (!match) throw new Error("Could not parse HIKING_PARKS from trails script");
+async function getParkCodesFromTrails(): Promise<string[]> {
+  const trailsPath = join(import.meta.dir, "..", "src", "data", "trails.json");
 
-  const parkCodes = [...match[1]!.matchAll(/"([a-z]+)"/g)].map((m) => m[1]!);
+  if (!(await Bun.file(trailsPath).exists())) {
+    throw new Error(`Missing trails data at ${trailsPath}. Run bun run fetch first.`);
+  }
+
+  const trails = (await Bun.file(trailsPath).json()) as Array<{ parkCode?: string }>;
+  const parkCodes = [...new Set(trails.map((trail) => trail.parkCode?.toLowerCase() ?? "").filter(Boolean))];
+
+  if (parkCodes.length === 0) {
+    throw new Error(`No park codes found in ${trailsPath}`);
+  }
+
+  return parkCodes.sort();
+}
+
+async function main() {
+  const parkCodes = await getParkCodesFromTrails();
   console.log(`Found ${parkCodes.length} park codes`);
 
   // Fetch in batches (ArcGIS URL length limits)
-  const batchSize = 20;
   const allFeatures: ArcGISFeature[] = [];
 
-  for (let i = 0; i < parkCodes.length; i += batchSize) {
-    const batch = parkCodes.slice(i, i + batchSize);
+  for (let i = 0; i < parkCodes.length; i += BATCH_SIZE) {
+    const batch = parkCodes.slice(i, i + BATCH_SIZE);
     const geojson = await fetchBoundaries(batch);
 
     for (const feature of geojson.features) {
       const boundaryCode = feature.properties.UNIT_CODE ?? "";
       const parkCode = toApiCode(boundaryCode);
+      const simplifiedGeometry = simplifyGeometry(feature.geometry);
+      if (!simplifiedGeometry) continue;
+
       allFeatures.push({
         type: "Feature",
         properties: {
@@ -154,12 +218,12 @@ async function main() {
           type: feature.properties.UNIT_TYPE ?? "",
           state: feature.properties.STATE ?? "",
         },
-        geometry: simplifyGeometry(feature.geometry),
+        geometry: simplifiedGeometry,
       });
     }
 
     const found = geojson.features.length;
-    console.log(`  Batch ${Math.floor(i / batchSize) + 1}: requested ${batch.length}, got ${found} boundaries`);
+    console.log(`  Batch ${Math.floor(i / BATCH_SIZE) + 1}: requested ${batch.length}, got ${found} boundaries`);
     await Bun.sleep(500);
   }
 

@@ -1,16 +1,24 @@
-import trailData from "@/data/trails.json";
-import boundaryData from "@/data/boundaries.json";
-import type { Trail } from "./types";
-
-const MAX_BOUNDARY_DISTANCE_MILES = 2;
-const MERGE_DISTANCE_MILES = 1.25;
+import { join } from "path";
+import type { Trail } from "../src/lib/types";
 
 type BoundaryGeometry = GeoJSON.Polygon | GeoJSON.MultiPolygon;
 
 type BoundaryFeature = GeoJSON.Feature<BoundaryGeometry, { parkCode?: string }>;
 
-const ALL_TRAILS = trailData as Trail[];
-const ALL_BOUNDARIES = boundaryData as unknown as GeoJSON.FeatureCollection<BoundaryGeometry>;
+function getArgValue(flag: string): string | null {
+  const prefix = `--${flag}=`;
+  const arg = process.argv.find((value) => value.startsWith(prefix));
+  return arg ? arg.slice(prefix.length) : null;
+}
+
+function parsePositiveFloat(value: string | null, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const MAX_DISTANCE_MILES = parsePositiveFloat(getArgValue("max-distance"), 2);
+const MERGE_DISTANCE_MILES = parsePositiveFloat(getArgValue("merge-distance"), 1.25);
 
 function toRadians(value: number): number {
   return (value * Math.PI) / 180;
@@ -51,9 +59,7 @@ function pointInPolygon(point: [number, number], polygon: GeoJSON.Position[][]):
   if (!pointInRing(point, polygon[0] ?? [])) return false;
 
   for (let i = 1; i < polygon.length; i += 1) {
-    if (pointInRing(point, polygon[i] ?? [])) {
-      return false;
-    }
+    if (pointInRing(point, polygon[i] ?? [])) return false;
   }
 
   return true;
@@ -148,7 +154,6 @@ function mergeTrailCluster(cluster: Trail[]): Trail {
 
   const activities = [...new Set(cluster.flatMap((trail) => trail.activities ?? []))];
   const imageByUrl = new Map<string, NonNullable<Trail["images"]>[number]>();
-
   for (const trail of cluster) {
     for (const image of trail.images ?? []) {
       if (!imageByUrl.has(image.url)) {
@@ -178,12 +183,12 @@ function dedupeNearbyTrails(trails: Trail[], mergeDistanceMiles: number): Trail[
   const byPark = new Map<string, Trail[]>();
 
   for (const trail of trails) {
-    const key = trail.parkCode.toLowerCase();
-    const existing = byPark.get(key);
-    if (existing) {
-      existing.push(trail);
+    const parkCode = trail.parkCode.toLowerCase();
+    const items = byPark.get(parkCode);
+    if (items) {
+      items.push(trail);
     } else {
-      byPark.set(key, [trail]);
+      byPark.set(parkCode, [trail]);
     }
   }
 
@@ -226,67 +231,63 @@ function dedupeNearbyTrails(trails: Trail[], mergeDistanceMiles: number): Trail[
   return deduped;
 }
 
-const BOUNDARY_BY_PARK = buildBoundaryIndex(ALL_BOUNDARIES.features as BoundaryFeature[]);
+async function main() {
+  const trailsPath = join(import.meta.dir, "..", "src", "data", "trails.json");
+  const boundariesPath = join(import.meta.dir, "..", "src", "data", "boundaries.json");
 
-const FILTERED_TRAILS = ALL_TRAILS.filter((trail) => {
-  const parkCode = trail.parkCode.toLowerCase();
-  const geometry = BOUNDARY_BY_PARK.get(parkCode);
-  if (!geometry) {
-    return false;
-  }
+  const trails = (await Bun.file(trailsPath).json()) as Trail[];
+  const boundaries = (await Bun.file(boundariesPath).json()) as GeoJSON.FeatureCollection<BoundaryGeometry>;
 
-  const point: [number, number] = [trail.coordinates.lng, trail.coordinates.lat];
-  if (pointInBoundary(point, geometry)) {
+  const boundaryByParkCode = buildBoundaryIndex(boundaries.features as BoundaryFeature[]);
+
+  let removedNoBoundary = 0;
+  let removedDistance = 0;
+
+  const cleanedTrails = trails.filter((trail) => {
+    const parkCode = trail.parkCode.toLowerCase();
+    const geometry = boundaryByParkCode.get(parkCode);
+    if (!geometry) {
+      removedNoBoundary += 1;
+      return false;
+    }
+
+    const point: [number, number] = [trail.coordinates.lng, trail.coordinates.lat];
+    if (pointInBoundary(point, geometry)) return true;
+
+    const distance = minDistanceToBoundaryMiles(point, geometry);
+    if (distance > MAX_DISTANCE_MILES) {
+      removedDistance += 1;
+      return false;
+    }
+
     return true;
-  }
+  });
 
-  const distanceMiles = minDistanceToBoundaryMiles(point, geometry);
-  return distanceMiles <= MAX_BOUNDARY_DISTANCE_MILES;
-});
+  const dedupedTrails = dedupeNearbyTrails(cleanedTrails, MERGE_DISTANCE_MILES);
+  const removedByMerge = cleanedTrails.length - dedupedTrails.length;
 
-const DEDUPED_TRAILS = dedupeNearbyTrails(FILTERED_TRAILS, MERGE_DISTANCE_MILES);
-
-const FILTERED_TRAIL_PARK_CODES = new Set(DEDUPED_TRAILS.map((trail) => trail.parkCode.toLowerCase()));
-
-const FILTERED_BOUNDARIES: GeoJSON.FeatureCollection = {
-  type: "FeatureCollection",
-  features: ALL_BOUNDARIES.features.filter((feature) => {
-    const parkCode = String((feature as BoundaryFeature).properties?.parkCode ?? "").toLowerCase();
-    return FILTERED_TRAIL_PARK_CODES.has(parkCode);
-  }),
-};
-
-export function getTrails(): Trail[] {
-  return DEDUPED_TRAILS;
-}
-
-export function getBoundaries(): GeoJSON.FeatureCollection {
-  return FILTERED_BOUNDARIES;
-}
-
-export function getTrailById(id: string): Trail | undefined {
-  return DEDUPED_TRAILS.find((trail) => trail.id === id);
-}
-
-export function getTrailsGeoJSON() {
-  const trails = getTrails();
-  return {
-    type: "FeatureCollection" as const,
-    features: trails.map((trail) => ({
-      type: "Feature" as const,
-      properties: {
-        id: trail.id,
-        name: trail.name,
-        parkName: trail.parkName,
-        difficulty: trail.difficulty,
-        length: trail.length,
-        elevationGain: trail.elevationGain,
-        imageUrl: trail.imageUrl,
-      },
-      geometry: {
-        type: "Point" as const,
-        coordinates: [trail.coordinates.lng, trail.coordinates.lat],
-      },
-    })),
+  const parkCodes = new Set(dedupedTrails.map((trail) => trail.parkCode.toLowerCase()));
+  const cleanedBoundaries: GeoJSON.FeatureCollection<BoundaryGeometry> = {
+    type: "FeatureCollection",
+    features: boundaries.features.filter((feature) => {
+      const parkCode = String((feature as BoundaryFeature).properties?.parkCode ?? "").toLowerCase();
+      return parkCodes.has(parkCode);
+    }),
   };
+
+  await Bun.write(trailsPath, JSON.stringify(dedupedTrails, null, 2));
+  await Bun.write(boundariesPath, JSON.stringify(cleanedBoundaries));
+
+  console.log(`Cleaned trails with max distance ${MAX_DISTANCE_MILES} miles`);
+  console.log(`Merged nearby trails within ${MERGE_DISTANCE_MILES} miles`);
+  console.log(`Removed ${removedNoBoundary} trails with no matching boundary`);
+  console.log(`Removed ${removedDistance} trails too far from park boundary`);
+  console.log(`Merged ${removedByMerge} nearby trail points`);
+  console.log(`Remaining trails: ${dedupedTrails.length}`);
+  console.log(`Remaining boundaries: ${cleanedBoundaries.features.length}`);
 }
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
