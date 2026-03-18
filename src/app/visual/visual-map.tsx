@@ -470,6 +470,8 @@ function StateDetailSvg({ feature }: DetailProps) {
           stroke="hsl(var(--foreground))"
           strokeWidth={2.4}
           vectorEffect="non-scaling-stroke"
+          className="transition-[fill,stroke,opacity,filter] duration-700 ease-out"
+          style={{ filter: "drop-shadow(0 0 10px color-mix(in srgb, var(--foreground) 28%, transparent))" }}
         />
       ) : null}
     </svg>
@@ -521,7 +523,8 @@ function UsOverviewSvg({ features, selectedStateAbbr, onSelectState }: OverviewP
             strokeWidth={selected ? 2.6 : 1.05}
             fillOpacity={selected ? 1 : 0.92}
             vectorEffect="non-scaling-stroke"
-            className="cursor-pointer"
+            className="cursor-pointer transition-[fill,stroke,opacity,filter] duration-700 ease-out"
+            style={{ filter: selected ? "drop-shadow(0 0 10px rgba(255,255,255,0.45))" : "none" }}
             onClick={() => onSelectState(state.abbr)}
           />
         );
@@ -554,11 +557,13 @@ export function VisualMap({ trails }: Props) {
   const [selectedStateAbbr, setSelectedStateAbbr] = useState(defaultStateAbbr);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [autoCountdown, setAutoCountdown] = useState(5);
+  const [isAnimateMode, setIsAnimateMode] = useState(false);
+  const [animateProgress, setAnimateProgress] = useState(0);
 
   useEffect(() => {
     const cycleOrder = autoCycleOrderKey ? autoCycleOrderKey.split(",") : [];
 
-    if (!isAutoPlaying || cycleOrder.length <= 1) {
+    if (!isAutoPlaying || cycleOrder.length <= 1 || isAnimateMode) {
       return;
     }
 
@@ -586,7 +591,32 @@ export function VisualMap({ trails }: Props) {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [isAutoPlaying, autoCycleOrderKey]);
+  }, [isAutoPlaying, autoCycleOrderKey, isAnimateMode]);
+
+  useEffect(() => {
+    const cycleOrder = autoCycleOrderKey ? autoCycleOrderKey.split(",") : [];
+
+    if (!isAnimateMode || cycleOrder.length <= 1) {
+      return;
+    }
+
+    const maxSteps = cycleOrder.length * 2;
+    let step = 0;
+
+    const timer = window.setInterval(() => {
+      const nextAbbr = cycleOrder[step % cycleOrder.length] || cycleOrder[0] || "";
+      setSelectedStateAbbr(nextAbbr);
+      setAnimateProgress(step + 1);
+
+      step += 1;
+      if (step >= maxSteps) {
+        window.clearInterval(timer);
+        setIsAnimateMode(false);
+      }
+    }, 700);
+
+    return () => window.clearInterval(timer);
+  }, [isAnimateMode, autoCycleOrderKey]);
 
   const handleSelectState = (abbr: string) => {
     setSelectedStateAbbr(abbr);
@@ -594,6 +624,19 @@ export function VisualMap({ trails }: Props) {
       setIsAutoPlaying(false);
       setAutoCountdown(5);
     }
+    if (isAnimateMode) {
+      setIsAnimateMode(false);
+      setAnimateProgress(0);
+    }
+  };
+
+  const handleStartAnimateMode = () => {
+    if (autoCycleOrder.length <= 1) return;
+
+    setIsAutoPlaying(false);
+    setAutoCountdown(5);
+    setAnimateProgress(0);
+    setIsAnimateMode(true);
   };
 
   const selectedFeature =
@@ -632,7 +675,7 @@ export function VisualMap({ trails }: Props) {
             <p className="pb-0.5 text-center text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               {selectedFeature?.properties.name ?? "State"}
             </p>
-            <div className="overflow-hidden rounded-xl aspect-[10/7]">
+            <div className="relative overflow-hidden rounded-xl aspect-[10/7]">
               <StateDetailSvg feature={selectedFeature} />
             </div>
           </section>
@@ -642,19 +685,35 @@ export function VisualMap({ trails }: Props) {
               <p className="text-center text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 United States
               </p>
-              <Button
-                variant={isAutoPlaying ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setIsAutoPlaying((current) => !current);
-                  setAutoCountdown(5);
-                }}
-                aria-label={isAutoPlaying ? "Pause automatic state playback" : "Start automatic state playback"}
-              >
-                {isAutoPlaying ? `Pause Auto (${autoCountdown}s)` : "Auto Play 5s"}
-              </Button>
+              {!isAnimateMode ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={isAutoPlaying ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setIsAutoPlaying((current) => !current);
+                      setAutoCountdown(5);
+                    }}
+                    aria-label={isAutoPlaying ? "Pause automatic state playback" : "Start automatic state playback"}
+                  >
+                    {isAutoPlaying ? `Pause Auto (${autoCountdown}s)` : "Auto Play 5s"}
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleStartAnimateMode}
+                    aria-label="Start animate recording mode"
+                  >
+                    Animate
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-xs font-medium text-muted-foreground">
+                  Animating {animateProgress.toLocaleString()} / {(autoCycleOrder.length * 2).toLocaleString()}
+                </p>
+              )}
             </div>
-            <div className="overflow-hidden rounded-xl aspect-[10/7]">
+            <div className="relative overflow-hidden rounded-xl aspect-[10/7]">
               <UsOverviewSvg
                 features={stateFeatures}
                 selectedStateAbbr={selectedStateAbbr}
