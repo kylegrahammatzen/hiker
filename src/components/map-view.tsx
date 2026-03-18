@@ -475,63 +475,64 @@ function addStateLayers(map: maplibregl.Map, isDark: boolean) {
   }
 }
 
-function applyGroupMode(map: maplibregl.Map, trails: Trail[], mode: GroupMode, isDark: boolean) {
-  if (!map.getLayer("trails-unclustered")) return;
-  if (!map.getLayer("trails-state-points")) return;
-  if (!map.getLayer("parks-points")) return;
+function applyGroupMode(map: maplibregl.Map, trails: Trail[], mode: GroupMode, focusedParkCode: string | null, isDark: boolean) {
+  const effectiveMode = focusedParkCode ? "park" : mode;
 
-  if (mode === "state") {
+  if (effectiveMode === "state") {
     if (map.getLayer("trails-clusters")) {
       map.setLayoutProperty("trails-clusters", "visibility", "none");
     }
     if (map.getLayer("trails-cluster-count")) {
       map.setLayoutProperty("trails-cluster-count", "visibility", "none");
     }
-
-    map.setLayoutProperty("trails-unclustered", "visibility", "none");
-    map.setLayoutProperty("trails-state-points", "visibility", "visible");
-    map.setLayoutProperty("parks-points", "visibility", "none");
-
-    map.setPaintProperty("trails-state-points", "circle-radius", [
-      "interpolate",
-      ["linear"],
-      ["zoom"],
-      3,
-      2,
-      5,
-      3,
-      8,
-      4,
-      11,
-      5.5,
-    ]);
-    map.setPaintProperty("trails-state-points", "circle-opacity", [
-      "interpolate",
-      ["linear"],
-      ["zoom"],
-      3,
-      0.65,
-      4.5,
-      0.85,
-      7,
-      1,
-    ]);
-    map.setPaintProperty("trails-state-points", "circle-stroke-opacity", [
-      "interpolate",
-      ["linear"],
-      ["zoom"],
-      3,
-      0.6,
-      4.5,
-      0.8,
-      7,
-      1,
-    ]);
-    map.setPaintProperty("trails-state-points", "circle-stroke-width", ["interpolate", ["linear"], ["zoom"], 3, 0.8, 10, 1.8]);
-
-    const expr = buildStateColorExpression(trails);
-    map.setPaintProperty("trails-state-points", "circle-color", expr);
-    map.setPaintProperty("trails-state-points", "circle-stroke-color", isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)");
+    if (map.getLayer("trails-unclustered")) {
+      map.setLayoutProperty("trails-unclustered", "visibility", "none");
+    }
+    if (map.getLayer("trails-state-points")) {
+      map.setLayoutProperty("trails-state-points", "visibility", "visible");
+      map.setPaintProperty("trails-state-points", "circle-radius", [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        3,
+        2,
+        5,
+        3,
+        8,
+        4,
+        11,
+        5.5,
+      ]);
+      map.setPaintProperty("trails-state-points", "circle-opacity", [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        3,
+        0.65,
+        4.5,
+        0.85,
+        7,
+        1,
+      ]);
+      map.setPaintProperty("trails-state-points", "circle-stroke-opacity", [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        3,
+        0.6,
+        4.5,
+        0.8,
+        7,
+        1,
+      ]);
+      map.setPaintProperty("trails-state-points", "circle-stroke-width", ["interpolate", ["linear"], ["zoom"], 3, 0.8, 10, 1.8]);
+      const expr = buildStateColorExpression(trails);
+      map.setPaintProperty("trails-state-points", "circle-color", expr);
+      map.setPaintProperty("trails-state-points", "circle-stroke-color", isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)");
+    }
+    if (map.getLayer("parks-points")) {
+      map.setLayoutProperty("parks-points", "visibility", "none");
+    }
   } else {
     if (map.getLayer("trails-clusters")) {
       map.setLayoutProperty("trails-clusters", "visibility", "none");
@@ -539,14 +540,18 @@ function applyGroupMode(map: maplibregl.Map, trails: Trail[], mode: GroupMode, i
     if (map.getLayer("trails-cluster-count")) {
       map.setLayoutProperty("trails-cluster-count", "visibility", "none");
     }
-
-    map.setLayoutProperty("trails-unclustered", "visibility", "none");
-    map.setLayoutProperty("trails-state-points", "visibility", "none");
-    map.setLayoutProperty("parks-points", "visibility", "visible");
-
-    const expr = buildStateColorExpression(trails);
-    map.setPaintProperty("parks-points", "circle-color", expr);
-    map.setPaintProperty("parks-points", "circle-stroke-color", isDark ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.95)");
+    if (map.getLayer("trails-unclustered")) {
+      map.setLayoutProperty("trails-unclustered", "visibility", "none");
+    }
+    if (map.getLayer("trails-state-points")) {
+      map.setLayoutProperty("trails-state-points", "visibility", "none");
+    }
+    if (map.getLayer("parks-points")) {
+      map.setLayoutProperty("parks-points", "visibility", "visible");
+      const expr = buildStateColorExpression(trails);
+      map.setPaintProperty("parks-points", "circle-color", expr);
+      map.setPaintProperty("parks-points", "circle-stroke-color", isDark ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.95)");
+    }
   }
 
   if (map.getLayer("us-states-outline")) {
@@ -625,6 +630,7 @@ type MapState = {
   popup: maplibregl.Popup | null;
   groupMode: GroupMode;
   spiderfied: boolean;
+  focusedParkCode: string | null;
 };
 
 export default function MapView({ trails, boundaries, theme, initialParkCode, ref }: MapViewProps) {
@@ -640,6 +646,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     popup: null,
     groupMode: "state",
     spiderfied: false,
+    focusedParkCode: null,
   });
   const [loaded, setLoaded] = useState(false);
   const [cursor, setCursor] = useState<{ lng: number; lat: number } | null>(null);
@@ -656,6 +663,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
   state.current.isDark = theme === "dark";
   state.current.selectedId = selectedId;
   state.current.groupMode = groupMode;
+  state.current.focusedParkCode = focusedParkCode;
 
   useEffect(() => {
     if (!ref) return;
@@ -729,7 +737,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       addTrailLayers(map, s.trails, s.isDark);
       addStateLayers(map, s.isDark);
       addSpiderfyLayers(map, s.isDark);
-      applyGroupMode(map, s.trails, s.groupMode, s.isDark);
+      applyGroupMode(map, s.trails, s.groupMode, s.focusedParkCode, s.isDark);
       emitViewState();
 
 
@@ -924,7 +932,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       addTrailLayers(map, s.trails, s.isDark);
       addStateLayers(map, s.isDark);
       addSpiderfyLayers(map, s.isDark);
-      applyGroupMode(map, s.trails, s.groupMode, s.isDark);
+      applyGroupMode(map, s.trails, s.groupMode, s.focusedParkCode, s.isDark);
       hideBaseBoundaries(map);
       if (s.selectedId) {
         map.setFilter("trails-selected", ["==", ["get", "id"], s.selectedId]);
@@ -969,7 +977,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
           map.setLayoutProperty(layer, "visibility", "visible");
         }
 
-        applyGroupMode(map, s.trails, s.groupMode, s.isDark);
+        applyGroupMode(map, s.trails, s.groupMode, s.focusedParkCode, s.isDark);
         flyToDefaultView(map, 450);
 
         actions.resetView();
@@ -1007,8 +1015,8 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       return;
     }
 
-    applyGroupMode(map, trails, groupMode, state.current.isDark);
-  }, [groupMode, trails, selectedId]);
+    applyGroupMode(map, trails, groupMode, focusedParkCode, state.current.isDark);
+  }, [groupMode, trails, selectedId, focusedParkCode]);
 
   // Selection — hide unrelated layers when a trail is selected
   useEffect(() => {
@@ -1057,7 +1065,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
         map.setLayoutProperty(layer, "visibility", "visible");
       }
 
-      applyGroupMode(map, trails, state.current.groupMode, state.current.isDark);
+      applyGroupMode(map, trails, state.current.groupMode, state.current.focusedParkCode, state.current.isDark);
 
       map.setFilter("trails-selected", ["==", ["get", "id"], ""]);
       hideSelectedBoundary(map);
