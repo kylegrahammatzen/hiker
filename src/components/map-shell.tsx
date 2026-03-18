@@ -1,15 +1,16 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { PlusIcon, MinusIcon, SunIcon, MoonIcon, XIcon } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import type { Trail } from "@/lib/types";
 import { AppPanelTrigger, usePanel } from "@/components/ui/app-panel";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { useTrailActions } from "@/lib/trail-context";
+import { useTrailActions, useMapView, useSelectedTrailId, useFocusedParkCode } from "@/lib/trail-context";
 import MapView from "@/components/map-view";
 import type { MapViewHandle } from "@/components/map-view";
+import { useHasMounted } from "@/hooks/use-has-mounted";
 
 function CompassRose({ bearing, onClick }: { bearing: number; onClick: () => void }) {
   return (
@@ -46,20 +47,10 @@ export function MapShell({ trails, boundaries, initialParkCode }: { trails: Trai
   const { resolvedTheme, setTheme } = useTheme();
   const { open: panelOpen } = usePanel();
   const actions = useTrailActions();
-  const [mounted, setMounted] = useState(false);
-  const [bearing, setBearing] = useState(0);
-  const [isAtDefault, setIsAtDefault] = useState(true);
-
-  useEffect(() => { setMounted(true) }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const b = mapViewRef.current?.getBearing() ?? 0;
-      setBearing((prev) => (Math.abs(prev - b) > 0.5 ? b : prev));
-      setIsAtDefault(mapViewRef.current?.isAtDefaultView() ?? true);
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
+  const mapView = useMapView();
+  const selectedTrailId = useSelectedTrailId();
+  const focusedParkCode = useFocusedParkCode();
+  const mounted = useHasMounted();
 
   useEffect(() => {
     const t = setTimeout(() => mapViewRef.current?.resize(), 210);
@@ -67,13 +58,14 @@ export function MapShell({ trails, boundaries, initialParkCode }: { trails: Trai
   }, [panelOpen]);
 
   const isDark = mounted && resolvedTheme === "dark";
+  const showReset = !mapView.isAtDefault || selectedTrailId !== null || focusedParkCode !== null;
 
   return (
     <div className="relative h-full w-full">
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           <AppPanelTrigger variant="map" size="icon-sm" />
-          {!isAtDefault && (
+          {showReset && (
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -143,7 +135,7 @@ export function MapShell({ trails, boundaries, initialParkCode }: { trails: Trai
 
       <div className="absolute top-2 right-2 z-10">
         <CompassRose
-          bearing={bearing}
+          bearing={mapView.bearing}
           onClick={() => mapViewRef.current?.resetNorth()}
         />
       </div>

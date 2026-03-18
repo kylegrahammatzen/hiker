@@ -61,27 +61,37 @@ const STATE_NAMES: Record<string, string> = {
   MP: "Northern Mariana Islands", DC: "District of Columbia",
 };
 
-function expandStateName(abbr: string): string {
-  if (abbr.includes(",")) {
-    return abbr
-      .split(",")
-      .map((s) => STATE_NAMES[s.trim()] ?? s.trim())
-      .join(", ");
-  }
-  return STATE_NAMES[abbr] ?? abbr;
+const LISTABLE_STATE_CODES = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+  "DC",
+]);
+
+function parseTrailStateCodes(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((part) => part.trim().toUpperCase())
+    .filter((code) => code.length === 2 && LISTABLE_STATE_CODES.has(code));
 }
 
 export function groupByState(trails: Trail[]): ParkGroup[] {
   const map = new Map<string, Trail[]>();
+
   for (const t of trails) {
-    const state = t.state || "Unknown";
-    const arr = map.get(state);
-    if (arr) arr.push(t);
-    else map.set(state, [t]);
+    const states = parseTrailStateCodes(t.state || "");
+    for (const stateCode of states) {
+      const arr = map.get(stateCode);
+      if (arr) arr.push(t);
+      else map.set(stateCode, [t]);
+    }
   }
-  return Array.from(map, ([state, stateTrails]) => ({
-    parkName: expandStateName(state),
-    parkCode: state.toLowerCase().replace(/[^a-z]/g, ""),
+
+  return Array.from(map, ([stateCode, stateTrails]) => ({
+    parkName: STATE_NAMES[stateCode] ?? stateCode,
+    parkCode: stateCode.toLowerCase(),
     trails: stateTrails,
   }));
 }
@@ -91,7 +101,9 @@ export function groupTrails(trails: Trail[], mode: GroupMode): ParkGroup[] {
 }
 
 export function computeDisplayGroups(groups: ParkGroup[]): DisplayGroups {
-  const sorted = [...groups].sort((a, b) => b.trails.length - a.trails.length);
+  const sorted = [...groups].sort((a, b) =>
+    a.parkName.localeCompare(b.parkName, undefined, { sensitivity: "base" }),
+  );
 
   return {
     multiGroups: sorted,

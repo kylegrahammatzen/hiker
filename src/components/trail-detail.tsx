@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import type { Trail } from "@/lib/types";
@@ -13,7 +13,6 @@ import {
   MapPinIcon,
   TrendUpIcon,
   RulerIcon,
-  MountainsIcon,
   CaretLeftIcon,
   CaretRightIcon,
   ShareNetworkIcon,
@@ -33,6 +32,7 @@ import type { WeatherForecast } from "@/app/api/weather/route";
 import type { WildlifeData, WildlifeSpecies } from "@/app/api/wildlife/route";
 import type { AlertsData, ParkAlert } from "@/app/api/alerts/route";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PanelDialog } from "@/components/ui/panel-dialog";
 
 const difficultyColor = {
   easy: "bg-success/16 text-success-foreground",
@@ -51,29 +51,20 @@ function ImageGallery({ trail }: { trail: Trail }) {
     trail.images?.length > 0
       ? trail.images
       : [{ url: trail.imageUrl, alt: trail.imageAlt, caption: "" }];
-  
+
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
   const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
   const [current, setCurrent] = useState(0);
-  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [isFullscreenRequested, setIsFullscreenRequested] = useState(false);
   const touchStart = useRef(0);
 
   const validImages = allImages.filter((img) => !failedUrls.has(img.url));
   const hasImages = validImages.length > 0;
-  const currentImage = validImages[current] ?? validImages[0];
+  const imageCount = validImages.length;
+  const currentIndex = imageCount > 0 ? Math.min(current, imageCount - 1) : 0;
+  const currentImage = validImages[currentIndex] ?? null;
   const isCurrentLoaded = currentImage ? loadedUrls.has(currentImage.url) : false;
-
-  useEffect(() => {
-    if (current >= validImages.length && validImages.length > 0) {
-      setCurrent(validImages.length - 1);
-    }
-  }, [current, validImages.length]);
-
-  useEffect(() => {
-    if (!hasImages && isFullscreenOpen) {
-      setIsFullscreenOpen(false);
-    }
-  }, [hasImages, isFullscreenOpen]);
+  const isFullscreenOpen = hasImages && isFullscreenRequested;
 
   const handleImageError = (url: string) => {
     setFailedUrls((prev) => new Set(prev).add(url));
@@ -83,8 +74,21 @@ function ImageGallery({ trail }: { trail: Trail }) {
     setLoadedUrls((prev) => new Set(prev).add(url));
   };
 
-  const prev = () => setCurrent((c) => (c - 1 + validImages.length) % validImages.length);
-  const next = () => setCurrent((c) => (c + 1) % validImages.length);
+  const prev = () => {
+    if (imageCount <= 1) return;
+    setCurrent((currentValue) => {
+      const normalizedCurrent = Math.min(currentValue, imageCount - 1);
+      return (normalizedCurrent - 1 + imageCount) % imageCount;
+    });
+  };
+
+  const next = () => {
+    if (imageCount <= 1) return;
+    setCurrent((currentValue) => {
+      const normalizedCurrent = Math.min(currentValue, imageCount - 1);
+      return (normalizedCurrent + 1) % imageCount;
+    });
+  };
 
   return (
     <div className="relative w-full">
@@ -107,15 +111,15 @@ function ImageGallery({ trail }: { trail: Trail }) {
               <div className="absolute inset-0 animate-pulse bg-muted" />
             )}
             <Image
-              key={currentImage!.url}
-              src={currentImage!.url}
-              alt={currentImage!.alt}
+              key={currentImage.url}
+              src={currentImage.url}
+              alt={currentImage.alt}
               fill
               unoptimized
               priority
               className={cn("object-cover transition-opacity", isCurrentLoaded ? "opacity-100" : "opacity-0")}
-              onLoad={() => handleImageLoad(currentImage!.url)}
-              onError={() => handleImageError(currentImage!.url)}
+              onLoad={() => handleImageLoad(currentImage.url)}
+              onError={() => handleImageError(currentImage.url)}
             />
           </>
         ) : (
@@ -127,7 +131,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsFullscreenOpen(true)}
+            onClick={() => setIsFullscreenRequested(true)}
             className="absolute right-2 top-2 rounded-full bg-black/40 px-2.5 text-white hover:bg-black/60 backdrop-blur-sm"
           >
             Full screen
@@ -161,10 +165,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
               key={i}
               type="button"
               onClick={() => setCurrent(i)}
-              className={cn(
-                "size-2 rounded-full transition-colors",
-                i === current ? "bg-primary" : "bg-muted-foreground/30"
-              )}
+              className={cn("size-2 rounded-full transition-colors", i === currentIndex ? "bg-primary" : "bg-muted-foreground/30")}
             />
           ))}
         </div>
@@ -175,7 +176,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
         </p>
       )}
 
-      <DialogPrimitive.Root open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
+      <DialogPrimitive.Root open={isFullscreenOpen} onOpenChange={setIsFullscreenRequested}>
         <DialogPrimitive.Portal>
           <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
           <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-3 sm:p-6">
@@ -209,14 +210,14 @@ function ImageGallery({ trail }: { trail: Trail }) {
 
                 {hasImages && (
                   <Image
-                    key={`fullscreen-${currentImage!.url}`}
-                    src={currentImage!.url}
-                    alt={currentImage!.alt}
+                    key={`fullscreen-${currentImage.url}`}
+                    src={currentImage.url}
+                    alt={currentImage.alt}
                     fill
                     unoptimized
                     className={cn("object-contain transition-opacity duration-200", isCurrentLoaded ? "opacity-100" : "opacity-0")}
-                    onLoad={() => handleImageLoad(currentImage!.url)}
-                    onError={() => handleImageError(currentImage!.url)}
+                    onLoad={() => handleImageLoad(currentImage.url)}
+                    onError={() => handleImageError(currentImage.url)}
                   />
                 )}
 
@@ -249,10 +250,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
                       key={`fullscreen-dot-${i}`}
                       type="button"
                       onClick={() => setCurrent(i)}
-                      className={cn(
-                        "size-2 rounded-full transition-colors",
-                        i === current ? "bg-white" : "bg-white/30"
-                      )}
+                      className={cn("size-2 rounded-full transition-colors", i === currentIndex ? "bg-white" : "bg-white/30")}
                     />
                   ))}
                 </div>
@@ -318,6 +316,14 @@ function AlertBanner({ alert }: { alert: ParkAlert }) {
   );
 }
 
+function alertPriority(category: string): number {
+  if (category === "Park Closure") return 0;
+  if (category === "Danger") return 1;
+  if (category === "Caution") return 2;
+  if (category === "Information") return 3;
+  return 4;
+}
+
 function AlertsSection({ data, loading }: { data: AlertsData | null; loading: boolean }) {
   if (loading) {
     return (
@@ -333,20 +339,33 @@ function AlertsSection({ data, loading }: { data: AlertsData | null; loading: bo
 
   if (!data?.alerts.length) return null;
 
+  const sortedAlerts = [...data.alerts].sort((a, b) => {
+    const byPriority = alertPriority(a.category) - alertPriority(b.category);
+    if (byPriority !== 0) return byPriority;
+    return a.title.localeCompare(b.title);
+  });
+
+  const featuredAlert = sortedAlerts[0]!;
+
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="flex items-center gap-1.5 text-sm font-medium">
-        <WarningIcon className="size-4" />
-        Alerts
-        <Badge variant="ghost" className="bg-destructive/16 text-destructive-foreground text-[10px] px-1.5 py-0">
-          {data.alerts.length}
-        </Badge>
-      </h3>
-      <div className="flex flex-col gap-1.5">
-        {data.alerts.slice(0, 3).map((alert) => (
-          <AlertBanner key={alert.id} alert={alert} />
-        ))}
+      <div className="flex items-center justify-between">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <WarningIcon className="size-4" />
+          Alerts
+        </h3>
+        {sortedAlerts.length > 1 ? (
+          <PanelDialog title="Park Alerts" description="All active alerts for this park">
+            <div className="flex flex-col gap-2">
+              {sortedAlerts.map((alert) => (
+                <AlertBanner key={alert.id} alert={alert} />
+              ))}
+            </div>
+          </PanelDialog>
+        ) : null}
       </div>
+
+      <AlertBanner alert={featuredAlert} />
     </div>
   );
 }
@@ -374,8 +393,6 @@ function WeatherPeriodCard({ period }: { period: WeatherForecast["periods"][numb
 }
 
 function WeatherSection({ data, loading }: { data: WeatherForecast | null; loading: boolean }) {
-  const [open, setOpen] = useState(false);
-
   if (loading) {
     return (
       <div className="flex flex-col gap-2">
@@ -399,35 +416,11 @@ function WeatherSection({ data, loading }: { data: WeatherForecast | null; loadi
           <CloudSunIcon className="size-4" />
           Weather
         </h3>
-        <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
-          <DialogPrimitive.Trigger
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            View more
-          </DialogPrimitive.Trigger>
-          <DialogPrimitive.Portal>
-            <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
-            <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-4">
-              <DialogPrimitive.Popup className="relative w-full max-w-sm overflow-hidden rounded-xl border bg-background shadow-xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95">
-                <div className="flex items-center justify-between border-b px-4 py-3">
-                  <DialogPrimitive.Title className="text-sm font-semibold">Forecast</DialogPrimitive.Title>
-                  <DialogPrimitive.Close
-                    aria-label="Close"
-                    render={<Button size="icon-sm" variant="ghost" className="rounded-full" />}
-                  >
-                    <XIcon />
-                  </DialogPrimitive.Close>
-                </div>
-                <DialogPrimitive.Description className="sr-only">Extended weather forecast</DialogPrimitive.Description>
-                <div className="grid grid-cols-2 gap-1.5 p-4">
-                  {data.periods.map((period) => (
-                    <WeatherPeriodCard key={period.name} period={period} />
-                  ))}
-                </div>
-              </DialogPrimitive.Popup>
-            </DialogPrimitive.Viewport>
-          </DialogPrimitive.Portal>
-        </DialogPrimitive.Root>
+        <PanelDialog title="Forecast" description="Extended weather forecast" contentClassName="grid grid-cols-2 gap-1.5">
+          {data.periods.map((period) => (
+            <WeatherPeriodCard key={period.name} period={period} />
+          ))}
+        </PanelDialog>
       </div>
       <div className="flex items-center gap-3">
         <span className="text-2xl font-semibold tabular-nums leading-none">{today.temp}{today.unit === "F" ? "°" : "°C"}</span>
@@ -448,9 +441,12 @@ function SpeciesChip({ species }: { species: WildlifeSpecies }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px]">
       {species.photoUrl && (
-        <img
+        <Image
           src={species.photoUrl}
           alt=""
+          width={14}
+          height={14}
+          unoptimized
           className="size-3.5 rounded-sm object-cover"
           loading="lazy"
         />
@@ -461,8 +457,6 @@ function SpeciesChip({ species }: { species: WildlifeSpecies }) {
 }
 
 function WildlifeSection({ data, loading }: { data: WildlifeData | null; loading: boolean }) {
-  const [open, setOpen] = useState(false);
-
   if (loading) {
     return (
       <div className="flex flex-col gap-2">
@@ -497,42 +491,18 @@ function WildlifeSection({ data, loading }: { data: WildlifeData | null; loading
           <PawPrintIcon className="size-4" />
           Wildlife Nearby
         </h3>
-        <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
-          <DialogPrimitive.Trigger
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            View more
-          </DialogPrimitive.Trigger>
-          <DialogPrimitive.Portal>
-            <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
-            <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-4">
-              <DialogPrimitive.Popup className="relative w-full max-w-sm max-h-[70vh] overflow-hidden rounded-xl border bg-background shadow-xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95">
-                <div className="flex items-center justify-between border-b px-4 py-3">
-                  <DialogPrimitive.Title className="text-sm font-semibold">Wildlife Nearby</DialogPrimitive.Title>
-                  <DialogPrimitive.Close
-                    aria-label="Close"
-                    render={<Button size="icon-sm" variant="ghost" className="rounded-full" />}
-                  >
-                    <XIcon />
-                  </DialogPrimitive.Close>
-                </div>
-                <DialogPrimitive.Description className="sr-only">Species observed near this trail</DialogPrimitive.Description>
-                <div className="overflow-y-auto p-4 flex flex-col gap-3 max-h-[calc(70vh-3.25rem)]">
-                  {Array.from(grouped.entries()).map(([group, species]) => (
-                    <div key={group} className="flex flex-col gap-1">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{group}</span>
-                      <div className="flex flex-wrap gap-1">
-                        {species.map((s) => (
-                          <SpeciesChip key={s.id} species={s} />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </DialogPrimitive.Popup>
-            </DialogPrimitive.Viewport>
-          </DialogPrimitive.Portal>
-        </DialogPrimitive.Root>
+        <PanelDialog title="Wildlife Nearby" description="Species observed near this trail" contentClassName="flex flex-col gap-3">
+          {Array.from(grouped.entries()).map(([group, species]) => (
+            <div key={group} className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{group}</span>
+              <div className="flex flex-wrap gap-1">
+                {species.map((s) => (
+                  <SpeciesChip key={s.id} species={s} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </PanelDialog>
       </div>
       <div className="flex flex-wrap gap-1">
         {preview.map((s) => (
@@ -612,7 +582,7 @@ export function TrailDetail({
 
   return (
     <div className="flex flex-col">
-      <ImageGallery trail={trail} />
+      <ImageGallery key={trail.id} trail={trail} />
       <div className="flex flex-col gap-2 p-2">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-semibold leading-tight">{trail.name}</h2>

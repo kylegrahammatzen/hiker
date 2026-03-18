@@ -30,6 +30,33 @@ const STYLE_SATELLITE = "/api/tiles/styles/alidade_satellite.json";
 
 export const DEFAULT_CENTER: [number, number] = [-98.5, 39.8];
 export const DEFAULT_ZOOM = 4.2;
+const SELECTED_TRAIL_ZOOM = 12;
+const CLEAR_SELECTION_SCALE_FACTOR = 3;
+const CLEAR_SELECTION_ZOOM_DELTA = Math.log2(CLEAR_SELECTION_SCALE_FACTOR);
+
+function flyToDefaultView(map: maplibregl.Map, duration = 800) {
+  map.stop();
+  map.easeTo({
+    center: DEFAULT_CENTER,
+    zoom: DEFAULT_ZOOM,
+    bearing: 0,
+    pitch: 0,
+    duration,
+  });
+}
+
+function isDefaultView(map: maplibregl.Map): boolean {
+  const center = map.getCenter();
+  const zoom = map.getZoom();
+  const bearing = map.getBearing();
+
+  return (
+    Math.abs(center.lng - DEFAULT_CENTER[0]) < 0.1 &&
+    Math.abs(center.lat - DEFAULT_CENTER[1]) < 0.1 &&
+    Math.abs(zoom - DEFAULT_ZOOM) < 0.5 &&
+    Math.abs(bearing) < 1
+  );
+}
 
 const LIGHT_COLORS = {
   clusterSteps: ["#16a34a", "#0d9488", "#0284c7"] as [string, string, string],
@@ -69,8 +96,17 @@ function stateColor(state: string): string {
   return STATE_COLORS[Math.abs(hash) % STATE_COLORS.length]!;
 }
 
+function primaryStateCode(rawState: string): string {
+  const codes = rawState
+    .split(",")
+    .map((value) => value.trim().toUpperCase())
+    .filter((value) => value.length === 2);
+
+  return codes[0] ?? "UN";
+}
+
 function buildStateColorExpression(trails: Trail[]): maplibregl.ExpressionSpecification {
-  const states = [...new Set(trails.map((t) => t.state))].sort();
+  const states = [...new Set(trails.map((trail) => primaryStateCode(trail.state)))].sort();
   const cases: (string | maplibregl.ExpressionSpecification)[] = [];
   for (const state of states) {
     cases.push(state, stateColor(state));
@@ -88,7 +124,7 @@ function trailsToGeoJSON(trails: Trail[]): GeoJSON.FeatureCollection {
         name: trail.name,
         parkName: trail.parkName,
         parkCode: trail.parkCode,
-        state: trail.state,
+        state: primaryStateCode(trail.state),
         difficulty: trail.difficulty,
         length: trail.length,
         elevationGain: trail.elevationGain,
@@ -96,6 +132,60 @@ function trailsToGeoJSON(trails: Trail[]): GeoJSON.FeatureCollection {
       geometry: {
         type: "Point",
         coordinates: [trail.coordinates.lng, trail.coordinates.lat],
+      },
+    })),
+  };
+}
+
+function trailsToStateGeoJSON(trails: Trail[]): GeoJSON.FeatureCollection {
+  return trailsToGeoJSON(trails);
+}
+
+function parksToGeoJSON(trails: Trail[]): GeoJSON.FeatureCollection {
+  const byPark = new Map<string, {
+    parkCode: string;
+    parkName: string;
+    state: string;
+    count: number;
+    sumLat: number;
+    sumLng: number;
+  }>();
+
+  for (const trail of trails) {
+    const key = trail.parkCode;
+    const existing = byPark.get(key);
+
+    if (existing) {
+      existing.count += 1;
+      existing.sumLat += trail.coordinates.lat;
+      existing.sumLng += trail.coordinates.lng;
+      continue;
+    }
+
+    byPark.set(key, {
+      parkCode: trail.parkCode,
+      parkName: trail.parkName,
+      state: primaryStateCode(trail.state),
+      count: 1,
+      sumLat: trail.coordinates.lat,
+      sumLng: trail.coordinates.lng,
+    });
+  }
+
+  return {
+    type: "FeatureCollection",
+    features: [...byPark.values()].map((park) => ({
+      type: "Feature",
+      properties: {
+        id: `park-${park.parkCode}`,
+        parkCode: park.parkCode,
+        parkName: park.parkName,
+        state: park.state,
+        trailCount: park.count,
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [park.sumLng / park.count, park.sumLat / park.count],
       },
     })),
   };
@@ -120,6 +210,9 @@ function addBoundaryLayers(map: maplibregl.Map, boundaries: GeoJSON.FeatureColle
       type: "fill",
       source: "boundaries",
       minzoom: 7,
+      layout: {
+        visibility: "none",
+      },
       paint: {
         "fill-color": fillColor,
         "fill-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0, 8, 1],
@@ -133,6 +226,9 @@ function addBoundaryLayers(map: maplibregl.Map, boundaries: GeoJSON.FeatureColle
       type: "line",
       source: "boundaries",
       minzoom: 7,
+      layout: {
+        visibility: "none",
+      },
       paint: {
         "line-color": lineColor,
         "line-width": 1.5,
@@ -147,6 +243,9 @@ function addBoundaryLayers(map: maplibregl.Map, boundaries: GeoJSON.FeatureColle
       type: "fill",
       source: "boundaries",
       filter: ["==", ["get", "parkCode"], ""],
+      layout: {
+        visibility: "none",
+      },
       paint: { "fill-color": selectedFill },
     });
   }
@@ -157,9 +256,36 @@ function addBoundaryLayers(map: maplibregl.Map, boundaries: GeoJSON.FeatureColle
       type: "line",
       source: "boundaries",
       filter: ["==", ["get", "parkCode"], ""],
+      layout: {
+        visibility: "none",
+      },
       paint: { "line-color": selectedLine, "line-width": 2.5 },
     });
   }
+}
+
+function hideBaseBoundaries(map: maplibregl.Map) {
+  if (!map.getLayer("boundaries-fill")) return;
+  map.setLayoutProperty("boundaries-fill", "visibility", "none");
+  map.setLayoutProperty("boundaries-outline", "visibility", "none");
+}
+
+function hideSelectedBoundary(map: maplibregl.Map) {
+  if (!map.getLayer("boundaries-selected-fill")) return;
+
+  map.setLayoutProperty("boundaries-selected-fill", "visibility", "none");
+  map.setLayoutProperty("boundaries-selected-outline", "visibility", "none");
+  map.setFilter("boundaries-selected-fill", ["==", ["get", "parkCode"], ""] as maplibregl.FilterSpecification);
+  map.setFilter("boundaries-selected-outline", ["==", ["get", "parkCode"], ""] as maplibregl.FilterSpecification);
+}
+
+function showSelectedBoundary(map: maplibregl.Map, parkCode: string) {
+  if (!map.getLayer("boundaries-selected-fill")) return;
+
+  map.setLayoutProperty("boundaries-selected-fill", "visibility", "visible");
+  map.setLayoutProperty("boundaries-selected-outline", "visibility", "visible");
+  map.setFilter("boundaries-selected-fill", ["==", ["get", "parkCode"], parkCode]);
+  map.setFilter("boundaries-selected-outline", ["==", ["get", "parkCode"], parkCode]);
 }
 
 function addTrailLayers(map: maplibregl.Map, trails: Trail[], isDark: boolean) {
@@ -170,8 +296,22 @@ function addTrailLayers(map: maplibregl.Map, trails: Trail[], isDark: boolean) {
       type: "geojson",
       data: trailsToGeoJSON(trails),
       cluster: true,
-      clusterMaxZoom: 12,
-      clusterRadius: 80,
+      clusterMaxZoom: 11,
+      clusterRadius: 48,
+    });
+  }
+
+  if (!map.getSource("trails-state")) {
+    map.addSource("trails-state", {
+      type: "geojson",
+      data: trailsToStateGeoJSON(trails),
+    });
+  }
+
+  if (!map.getSource("parks")) {
+    map.addSource("parks", {
+      type: "geojson",
+      data: parksToGeoJSON(trails),
     });
   }
 
@@ -223,7 +363,6 @@ function addTrailLayers(map: maplibregl.Map, trails: Trail[], isDark: boolean) {
       type: "circle",
       source: "trails",
       filter: ["!", ["has", "point_count"]],
-      minzoom: 6,
       paint: {
         "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 10, 6],
         "circle-color": colors.unclustered,
@@ -246,6 +385,66 @@ function addTrailLayers(map: maplibregl.Map, trails: Trail[], isDark: boolean) {
         "circle-color": colors.selected,
         "circle-stroke-color": colors.selectedStroke,
         "circle-stroke-width": 2,
+      },
+    });
+  }
+
+  if (!map.getLayer("trails-state-points")) {
+    map.addLayer({
+      id: "trails-state-points",
+      type: "circle",
+      source: "trails-state",
+      layout: {
+        visibility: "none",
+      },
+      paint: {
+        "circle-radius": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          2,
+          5,
+          3,
+          8,
+          4,
+          11,
+          5.5,
+        ],
+        "circle-color": buildStateColorExpression(trails),
+        "circle-stroke-color": isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)",
+        "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 10, 1.8],
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 3, 0.65, 4.5, 0.85, 7, 1],
+        "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 3, 0.6, 4.5, 0.8, 7, 1],
+      },
+    });
+  }
+
+  if (!map.getLayer("parks-points")) {
+    map.addLayer({
+      id: "parks-points",
+      type: "circle",
+      source: "parks",
+      layout: {
+        visibility: "none",
+      },
+      paint: {
+        "circle-radius": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          3.2,
+          6,
+          4.5,
+          10,
+          6.8,
+        ],
+        "circle-color": buildStateColorExpression(trails),
+        "circle-stroke-color": isDark ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.95)",
+        "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 3, 1.2, 10, 2.6],
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 3, 0.75, 5, 0.9, 7, 1],
+        "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 3, 0.7, 5, 0.85, 7, 1],
       },
     });
   }
@@ -278,24 +477,84 @@ function addStateLayers(map: maplibregl.Map, isDark: boolean) {
 
 function applyGroupMode(map: maplibregl.Map, trails: Trail[], mode: GroupMode, isDark: boolean) {
   if (!map.getLayer("trails-unclustered")) return;
-  const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
+  if (!map.getLayer("trails-state-points")) return;
+  if (!map.getLayer("parks-points")) return;
 
   if (mode === "state") {
+    if (map.getLayer("trails-clusters")) {
+      map.setLayoutProperty("trails-clusters", "visibility", "none");
+    }
+    if (map.getLayer("trails-cluster-count")) {
+      map.setLayoutProperty("trails-cluster-count", "visibility", "none");
+    }
+
+    map.setLayoutProperty("trails-unclustered", "visibility", "none");
+    map.setLayoutProperty("trails-state-points", "visibility", "visible");
+    map.setLayoutProperty("parks-points", "visibility", "none");
+
+    map.setPaintProperty("trails-state-points", "circle-radius", [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      3,
+      2,
+      5,
+      3,
+      8,
+      4,
+      11,
+      5.5,
+    ]);
+    map.setPaintProperty("trails-state-points", "circle-opacity", [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      3,
+      0.65,
+      4.5,
+      0.85,
+      7,
+      1,
+    ]);
+    map.setPaintProperty("trails-state-points", "circle-stroke-opacity", [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      3,
+      0.6,
+      4.5,
+      0.8,
+      7,
+      1,
+    ]);
+    map.setPaintProperty("trails-state-points", "circle-stroke-width", ["interpolate", ["linear"], ["zoom"], 3, 0.8, 10, 1.8]);
+
     const expr = buildStateColorExpression(trails);
-    map.setPaintProperty("trails-unclustered", "circle-color", expr);
-    map.setPaintProperty("trails-unclustered", "circle-stroke-color", isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)");
+    map.setPaintProperty("trails-state-points", "circle-color", expr);
+    map.setPaintProperty("trails-state-points", "circle-stroke-color", isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)");
   } else {
-    map.setPaintProperty("trails-unclustered", "circle-color", colors.unclustered);
-    map.setPaintProperty("trails-unclustered", "circle-stroke-color", colors.unclusteredStroke);
+    if (map.getLayer("trails-clusters")) {
+      map.setLayoutProperty("trails-clusters", "visibility", "none");
+    }
+    if (map.getLayer("trails-cluster-count")) {
+      map.setLayoutProperty("trails-cluster-count", "visibility", "none");
+    }
+
+    map.setLayoutProperty("trails-unclustered", "visibility", "none");
+    map.setLayoutProperty("trails-state-points", "visibility", "none");
+    map.setLayoutProperty("parks-points", "visibility", "visible");
+
+    const expr = buildStateColorExpression(trails);
+    map.setPaintProperty("parks-points", "circle-color", expr);
+    map.setPaintProperty("parks-points", "circle-stroke-color", isDark ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.95)");
   }
 
   if (map.getLayer("us-states-outline")) {
-    map.setLayoutProperty("us-states-outline", "visibility", mode === "state" ? "visible" : "none");
+    map.setLayoutProperty("us-states-outline", "visibility", "visible");
   }
 }
 
 function spiderfyPoints(center: [number, number], count: number, map: maplibregl.Map): [number, number][] {
-  const zoom = map.getZoom();
   const radiusPx = count <= 8 ? 30 : 30 + (count - 8) * 3;
   const centerPx = map.project(center);
   const points: [number, number][] = [];
@@ -361,6 +620,7 @@ type MapState = {
   boundaries: GeoJSON.FeatureCollection;
   isDark: boolean;
   selectedId: string | null;
+  selectedZoomBaseline: number | null;
   prevVisibleKey: string;
   popup: maplibregl.Popup | null;
   groupMode: GroupMode;
@@ -375,13 +635,13 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     boundaries,
     isDark: theme === "dark",
     selectedId: null,
+    selectedZoomBaseline: null,
     prevVisibleKey: "",
     popup: null,
     groupMode: "state",
     spiderfied: false,
   });
   const [loaded, setLoaded] = useState(false);
-  const [bearing, setBearing] = useState(0);
   const [cursor, setCursor] = useState<{ lng: number; lat: number } | null>(null);
 
   const selectedId = useSelectedTrailId();
@@ -404,29 +664,26 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       zoomOut: () => mapRef.current?.zoomOut({ duration: 300 }),
       resetNorth: () => mapRef.current?.easeTo({ bearing: 0, duration: 300 }),
       resize: () => mapRef.current?.resize(),
-      getBearing: () => bearing,
+      getBearing: () => mapRef.current?.getBearing() ?? 0,
       isAtDefaultView: () => {
         const map = mapRef.current;
         if (!map) return true;
-        const center = map.getCenter();
-        const zoom = map.getZoom();
-        const b = map.getBearing();
-        return (
-          Math.abs(center.lng - DEFAULT_CENTER[0]) < 0.1 &&
-          Math.abs(center.lat - DEFAULT_CENTER[1]) < 0.1 &&
-          Math.abs(zoom - DEFAULT_ZOOM) < 0.5 &&
-          Math.abs(b) < 1
-        );
+        return isDefaultView(map);
       },
     };
     if (typeof ref === "function") ref(handle);
     else (ref as React.MutableRefObject<MapViewHandle | null>).current = handle;
-  }, [ref, bearing]);
+  }, [ref]);
 
   // Map init
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
     const s = state.current;
+
+    function hideSelectedBoundaryIfUnselected() {
+      if (s.selectedId !== null) return;
+      hideSelectedBoundary(map);
+    }
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
@@ -438,6 +695,15 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       fadeDuration: 0,
       renderWorldCopies: false,
     });
+
+    function emitViewState() {
+      hideSelectedBoundaryIfUnselected();
+
+      actions.setMapView({
+        bearing: map.getBearing(),
+        isAtDefault: isDefaultView(map),
+      });
+    }
 
     function syncVisibleTrails() {
       const bounds = map.getBounds();
@@ -464,6 +730,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       addStateLayers(map, s.isDark);
       addSpiderfyLayers(map, s.isDark);
       applyGroupMode(map, s.trails, s.groupMode, s.isDark);
+      emitViewState();
 
 
       map.on("click", "trails-clusters", async (e) => {
@@ -564,6 +831,62 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
         s.popup = null;
       });
 
+      map.on("mouseenter", "trails-state-points", (e) => {
+        map.getCanvas().style.cursor = "pointer";
+        const feature = e.features?.[0];
+        if (!feature || feature.geometry.type !== "Point") return;
+        const coords = feature.geometry.coordinates as [number, number];
+        const props = feature.properties;
+        s.popup?.remove();
+        s.popup = new maplibregl.Popup({
+          offset: 12,
+          closeButton: false,
+          closeOnClick: false,
+          className: "trail-popup",
+        })
+          .setLngLat(coords)
+          .setHTML(
+            `<div style="font-size:12px;font-weight:500;max-width:200px">${props.name}</div>
+             <div style="font-size:10px;color:#666;margin-top:2px">${props.parkName}</div>`
+          )
+          .addTo(map);
+      });
+
+      map.on("mouseleave", "trails-state-points", () => {
+        map.getCanvas().style.cursor = "";
+        s.popup?.remove();
+        s.popup = null;
+      });
+
+      map.on("mouseenter", "parks-points", (e) => {
+        map.getCanvas().style.cursor = "pointer";
+        const feature = e.features?.[0];
+        if (!feature || feature.geometry.type !== "Point") return;
+        const coords = feature.geometry.coordinates as [number, number];
+        const props = feature.properties;
+        const trailCount = Number.parseInt(String(props.trailCount ?? "0"), 10);
+
+        s.popup?.remove();
+        s.popup = new maplibregl.Popup({
+          offset: 12,
+          closeButton: false,
+          closeOnClick: false,
+          className: "trail-popup",
+        })
+          .setLngLat(coords)
+          .setHTML(
+            `<div style="font-size:12px;font-weight:600;max-width:220px">${props.parkName}</div>
+             <div style="font-size:10px;color:#666;margin-top:2px">${trailCount} ${trailCount === 1 ? "trail" : "trails"}</div>`
+          )
+          .addTo(map);
+      });
+
+      map.on("mouseleave", "parks-points", () => {
+        map.getCanvas().style.cursor = "";
+        s.popup?.remove();
+        s.popup = null;
+      });
+
       map.on("mouseenter", "trails-clusters", () => {
         map.getCanvas().style.cursor = "pointer";
       });
@@ -577,6 +900,22 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
         actions.setSelectedTrailId(feature.properties.id);
       });
 
+      map.on("click", "trails-state-points", (e) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+        actions.setSelectedTrailId(feature.properties.id);
+      });
+
+      map.on("click", "parks-points", (e) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+        const parkCode = String(feature.properties.parkCode ?? "").toLowerCase();
+        if (!parkCode) return;
+
+        actions.setSelectedTrailId(null);
+        actions.setFocusedParkCode(parkCode);
+      });
+
       syncVisibleTrails();
     });
 
@@ -586,8 +925,15 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       addStateLayers(map, s.isDark);
       addSpiderfyLayers(map, s.isDark);
       applyGroupMode(map, s.trails, s.groupMode, s.isDark);
+      hideBaseBoundaries(map);
       if (s.selectedId) {
         map.setFilter("trails-selected", ["==", ["get", "id"], s.selectedId]);
+        const selectedTrail = s.trails.find((trail) => trail.id === s.selectedId);
+        if (selectedTrail) {
+          showSelectedBoundary(map, selectedTrail.parkCode);
+        }
+      } else {
+        hideSelectedBoundary(map);
       }
     });
 
@@ -599,7 +945,40 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     });
 
     map.on("idle", syncVisibleTrails);
-    map.on("rotate", () => setBearing(map.getBearing()));
+    map.on("rotate", emitViewState);
+    map.on("moveend", emitViewState);
+    map.on("zoom", () => {
+      const currentSelectedId = s.selectedId;
+      const baseline = s.selectedZoomBaseline;
+
+      if (
+        currentSelectedId &&
+        baseline !== null &&
+        map.getZoom() <= baseline - CLEAR_SELECTION_ZOOM_DELTA
+      ) {
+        s.selectedId = null;
+        s.selectedZoomBaseline = null;
+
+        map.setFilter("trails-selected", ["==", ["get", "id"], ""]);
+        hideBaseBoundaries(map);
+        hideSelectedBoundary(map);
+
+        const restoreLayers = ["trails-clusters", "trails-cluster-count", "trails-unclustered", "trails-state-points", "parks-points", "us-states-outline"];
+        for (const layer of restoreLayers) {
+          if (!map.getLayer(layer)) continue;
+          map.setLayoutProperty(layer, "visibility", "visible");
+        }
+
+        applyGroupMode(map, s.trails, s.groupMode, s.isDark);
+        flyToDefaultView(map, 450);
+
+        actions.resetView();
+      }
+    });
+
+    map.on("zoomend", () => {
+      emitViewState();
+    });
     map.on("mousemove", (e) => {
       setCursor({ lng: e.lngLat.lng, lat: e.lngLat.lat });
     });
@@ -618,8 +997,18 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
+
+    if (selectedId) {
+      const hiddenLayers = ["trails-clusters", "trails-cluster-count", "trails-unclustered", "trails-state-points", "parks-points", "spiderfy-points", "spiderfy-legs"];
+      for (const layer of hiddenLayers) {
+        if (!map.getLayer(layer)) continue;
+        map.setLayoutProperty(layer, "visibility", "none");
+      }
+      return;
+    }
+
     applyGroupMode(map, trails, groupMode, state.current.isDark);
-  }, [groupMode, trails]);
+  }, [groupMode, trails, selectedId]);
 
   // Selection — hide unrelated layers when a trail is selected
   useEffect(() => {
@@ -631,14 +1020,16 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       "trails-clusters",
       "trails-cluster-count",
       "trails-unclustered",
-      "boundaries-fill",
-      "boundaries-outline",
+      "trails-state-points",
+      "parks-points",
       "us-states-outline",
       "spiderfy-points",
       "spiderfy-legs",
     ];
 
     if (selectedId) {
+      hideBaseBoundaries(map);
+
       for (const layer of hiddenWhenSelected) {
         if (map.getLayer(layer)) map.setLayoutProperty(layer, "visibility", "none");
       }
@@ -648,43 +1039,53 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       map.setFilter("trails-selected", ["==", ["get", "id"], selectedId]);
       const trail = trails.find((t) => t.id === selectedId);
       if (trail) {
-        if (map.getLayer("boundaries-selected-fill")) {
-          map.setFilter("boundaries-selected-fill", ["==", ["get", "parkCode"], trail.parkCode]);
-          map.setFilter("boundaries-selected-outline", ["==", ["get", "parkCode"], trail.parkCode]);
-        }
+        state.current.selectedZoomBaseline = SELECTED_TRAIL_ZOOM;
+        showSelectedBoundary(map, trail.parkCode);
         map.flyTo({
           center: [trail.coordinates.lng, trail.coordinates.lat],
-          zoom: 12,
+          zoom: SELECTED_TRAIL_ZOOM,
           duration: 800,
         });
       }
     } else {
+      state.current.selectedZoomBaseline = null;
+
+      hideBaseBoundaries(map);
+
       for (const layer of hiddenWhenSelected) {
         if (!map.getLayer(layer)) continue;
-        // State outlines are controlled by group mode, restore accordingly
-        if (layer === "us-states-outline") {
-          map.setLayoutProperty(layer, "visibility", state.current.groupMode === "state" ? "visible" : "none");
-        } else {
-          map.setLayoutProperty(layer, "visibility", "visible");
-        }
+        map.setLayoutProperty(layer, "visibility", "visible");
       }
 
+      applyGroupMode(map, trails, state.current.groupMode, state.current.isDark);
+
       map.setFilter("trails-selected", ["==", ["get", "id"], ""]);
-      if (map.getLayer("boundaries-selected-fill")) {
-        const parkFilter = focusedParkCode
-          ? ["==", ["get", "parkCode"], focusedParkCode]
-          : ["==", ["get", "parkCode"], ""];
-        map.setFilter("boundaries-selected-fill", parkFilter as maplibregl.FilterSpecification);
-        map.setFilter("boundaries-selected-outline", parkFilter as maplibregl.FilterSpecification);
-      }
+      hideSelectedBoundary(map);
     }
   }, [selectedId, trails, focusedParkCode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    const trailsSource = map.getSource("trails") as maplibregl.GeoJSONSource | undefined;
+    trailsSource?.setData(trailsToGeoJSON(trails));
+
+    const stateTrailsSource = map.getSource("trails-state") as maplibregl.GeoJSONSource | undefined;
+    stateTrailsSource?.setData(trailsToStateGeoJSON(trails));
+
+    const parksSource = map.getSource("parks") as maplibregl.GeoJSONSource | undefined;
+    parksSource?.setData(parksToGeoJSON(trails));
+
+    const boundariesSource = map.getSource("boundaries") as maplibregl.GeoJSONSource | undefined;
+    boundariesSource?.setData(boundaries);
+  }, [trails, boundaries]);
 
   // Reset
   useEffect(() => {
     const map = mapRef.current;
     if (!map || resetSignal === 0) return;
-    map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 800 });
+    flyToDefaultView(map, 800);
   }, [resetSignal]);
 
   // Initial park focus
@@ -711,11 +1112,6 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    if (map.getLayer("boundaries-selected-fill")) {
-      map.setFilter("boundaries-selected-fill", ["==", ["get", "parkCode"], focusedParkCode]);
-      map.setFilter("boundaries-selected-outline", ["==", ["get", "parkCode"], focusedParkCode]);
-    }
-
     const parkTrails = trails.filter((t) => t.parkCode === focusedParkCode);
     if (parkTrails.length === 0) return;
     const lats = parkTrails.map((t) => t.coordinates.lat);
@@ -732,11 +1128,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     if (!loaded || focusedParkCode !== null) return;
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
-    if (map.getLayer("boundaries-selected-fill")) {
-      map.setFilter("boundaries-selected-fill", ["==", ["get", "parkCode"], ""]);
-      map.setFilter("boundaries-selected-outline", ["==", ["get", "parkCode"], ""]);
-    }
-    map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 800 });
+    flyToDefaultView(map, 800);
   }, [focusedParkCode, loaded]);
 
   return (

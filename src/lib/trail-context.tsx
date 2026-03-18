@@ -8,6 +8,10 @@ type State = {
   visibleTrailIds: string[];
   mapLoaded: boolean;
   focusedParkCode: string | null;
+  mapView: {
+    bearing: number;
+    isAtDefault: boolean;
+  };
   resetSignal: number;
   isLoadingPark: boolean;
   groupMode: GroupMode;
@@ -18,6 +22,7 @@ type Action =
   | { type: "SET_VISIBLE"; ids: string[] }
   | { type: "SET_MAP_LOADED" }
   | { type: "SET_FOCUSED_PARK"; code: string | null }
+  | { type: "SET_MAP_VIEW"; view: { bearing: number; isAtDefault: boolean } }
   | { type: "RESET_VIEW" }
   | { type: "SET_LOADING_PARK"; loading: boolean }
   | { type: "SET_GROUP_MODE"; mode: GroupMode };
@@ -27,6 +32,7 @@ type Actions = {
   setVisibleTrailIds: (ids: string[]) => void;
   setMapLoaded: () => void;
   setFocusedParkCode: (code: string | null) => void;
+  setMapView: (view: { bearing: number; isAtDefault: boolean }) => void;
   resetView: () => void;
   setLoadingPark: (loading: boolean) => void;
   setGroupMode: (mode: GroupMode) => void;
@@ -50,6 +56,12 @@ function writeParkParam(code: string | null) {
   window.history.replaceState(null, "", url.toString());
 }
 
+function readParkParam(): string | null {
+  if (typeof window === "undefined") return null;
+  const value = new URL(window.location.href).searchParams.get("park");
+  return value?.trim() || null;
+}
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "SET_SELECTED":
@@ -60,6 +72,19 @@ function reducer(state: State, action: Action): State {
       return state.mapLoaded ? state : { ...state, mapLoaded: true };
     case "SET_FOCUSED_PARK":
       return { ...state, focusedParkCode: action.code };
+    case "SET_MAP_VIEW": {
+      const bearingChanged = Math.abs(state.mapView.bearing - action.view.bearing) > 0.25;
+      const defaultChanged = state.mapView.isAtDefault !== action.view.isAtDefault;
+      if (!bearingChanged && !defaultChanged) return state;
+
+      return {
+        ...state,
+        mapView: {
+          bearing: bearingChanged ? action.view.bearing : state.mapView.bearing,
+          isAtDefault: action.view.isAtDefault,
+        },
+      };
+    }
     case "RESET_VIEW":
       return { ...state, selectedTrailId: null, focusedParkCode: null, resetSignal: state.resetSignal + 1, isLoadingPark: false };
     case "SET_LOADING_PARK":
@@ -74,6 +99,10 @@ const initialState: State = {
   visibleTrailIds: [],
   mapLoaded: false,
   focusedParkCode: null,
+  mapView: {
+    bearing: 0,
+    isAtDefault: true,
+  },
   resetSignal: 0,
   isLoadingPark: false,
   groupMode: "state",
@@ -83,10 +112,12 @@ const StateContext = createContext<State>(initialState);
 const ActionsContext = createContext<Actions | null>(null);
 
 export function TrailProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState, (s) => ({
-    ...s,
-    selectedTrailId: readHash(),
-  }));
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  useEffect(() => {
+    dispatch({ type: "SET_SELECTED", id: readHash() });
+    dispatch({ type: "SET_FOCUSED_PARK", code: readParkParam() });
+  }, []);
 
   useEffect(() => {
     const handler = () => {
@@ -111,6 +142,9 @@ export function TrailProvider({ children }: { children: React.ReactNode }) {
     setFocusedParkCode(code) {
       dispatch({ type: "SET_FOCUSED_PARK", code });
       writeParkParam(code);
+    },
+    setMapView(view) {
+      dispatch({ type: "SET_MAP_VIEW", view });
     },
     resetView() {
       dispatch({ type: "RESET_VIEW" });
@@ -158,6 +192,10 @@ export function useMapLoaded() {
 
 export function useFocusedParkCode() {
   return use(StateContext).focusedParkCode;
+}
+
+export function useMapView() {
+  return use(StateContext).mapView;
 }
 
 export function useResetSignal() {

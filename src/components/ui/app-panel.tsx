@@ -16,10 +16,15 @@ type PanelContextValue = {
 
 const PanelContext = React.createContext<PanelContextValue | null>(null)
 
+const FALLBACK_PANEL_CONTEXT: PanelContextValue = {
+  open: true,
+  setOpen: () => undefined,
+  isMobile: false,
+}
+
 function usePanel() {
   const ctx = use(PanelContext)
-  if (!ctx) throw new Error("usePanel must be used inside AppPanelProvider")
-  return ctx
+  return ctx ?? FALLBACK_PANEL_CONTEXT
 }
 
 function AppPanelProvider({

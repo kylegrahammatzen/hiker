@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { MagnifyingGlassMinusIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { TrailCard } from "@/components/trail-card";
@@ -41,21 +41,19 @@ export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]
 
   // Auto-open the first group if there's only one, or the group containing the selected trail
   const [openPark, setOpenPark] = useState<string | null>(() => {
-    if (groups.length === 1) return groups[0]!.parkName;
-    if (selectedId) {
-      const park = groups.find((g) => g.trails.some((t) => t.id === selectedId));
-      if (park) return park.parkName;
-    }
-    return null;
+    if (!selectedId) return null;
+    const park = groups.find((g) => g.trails.some((t) => t.id === selectedId));
+    return park?.parkName ?? null;
   });
+  const previousSelectedIdRef = useRef<string | null>(selectedId);
 
   // Keep openPark in sync when groups change
   const groupKey = groups.map((g) => g.parkName).join(",");
   useEffect(() => {
     setOpenPark((prev) => {
-      if (!prev) return groups.length === 1 ? groups[0]!.parkName : null;
+      if (!prev) return null;
       if (!groups.some((g) => g.parkName === prev)) {
-        return groups[0]?.parkName ?? null;
+        return null;
       }
       return prev;
     });
@@ -68,6 +66,13 @@ export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]
     if (park) setOpenPark(park.parkName);
   }, [selectedId, groups]);
 
+  useEffect(() => {
+    if (previousSelectedIdRef.current && !selectedId) {
+      setOpenPark(null);
+    }
+    previousSelectedIdRef.current = selectedId;
+  }, [selectedId]);
+
   const rows = buildRows(groups, openPark);
 
   const virtualizer = useVirtualizer({
@@ -77,13 +82,10 @@ export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]
     overscan: 5,
   });
 
-  const handleToggle = useCallback(
-    (group: ParkGroup) => {
-      const willOpen = openPark !== group.parkName;
-      setOpenPark(willOpen ? group.parkName : null);
-    },
-    [openPark],
-  );
+  function handleToggle(group: ParkGroup) {
+    const willOpen = openPark !== group.parkName;
+    setOpenPark(willOpen ? group.parkName : null);
+  }
 
   if (groups.length === 0) {
     return (

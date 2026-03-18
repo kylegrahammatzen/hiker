@@ -68,7 +68,7 @@ export function AppSidebar({ trails = [] }: { trails?: Trail[] }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => actions.setSelectedTrailId(null)}
+              onClick={actions.resetView}
             >
               <ArrowLeftIcon className="size-4" />
             </Button>
