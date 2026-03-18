@@ -182,6 +182,12 @@
   --sidebar-accent-foreground: var(--color-zinc-900);
   --sidebar-border: --alpha(var(--color-black) / 10%);
   --sidebar-ring: var(--color-zinc-400);
+
+  --chart-1: oklch(0.66 0.175 155);
+  --chart-2: oklch(0.62 0.17 246);
+  --chart-3: oklch(0.76 0.165 83);
+  --chart-4: oklch(0.66 0.2 33);
+  --chart-5: oklch(0.6 0.12 197);
 }
 
 .dark {
@@ -218,6 +224,12 @@
   --sidebar-accent-foreground: var(--color-zinc-100);
   --sidebar-border: --alpha(var(--color-white) / 12%);
   --sidebar-ring: var(--color-zinc-500);
+
+  --chart-1: oklch(0.73 0.16 155);
+  --chart-2: oklch(0.7 0.14 246);
+  --chart-3: oklch(0.8 0.15 83);
+  --chart-4: oklch(0.72 0.17 33);
+  --chart-5: oklch(0.72 0.1 197);
 }
 
 @layer base {

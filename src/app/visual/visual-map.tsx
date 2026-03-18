@@ -1,7 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, XAxis, YAxis } from "recharts";
 import usStatesData from "@/data/us-states.json";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Button } from "@/components/ui/button";
 import type { Trail } from "@/lib/types";
 
 const DISPLAYED_STATE_ABBRS = new Set<string>([
@@ -155,6 +165,101 @@ function buildTrailCountByState(trails: Trail[]): Map<string, number> {
   }
 
   return counts;
+}
+
+type ParkChartDatum = {
+  parkCode: string;
+  park: string;
+  fullPark: string;
+  trails: number;
+};
+
+type DifficultyKey = "easy" | "moderate" | "hard";
+
+type DifficultyChartDatum = {
+  difficulty: DifficultyKey;
+  value: number;
+};
+
+const PARKS_CHART_CONFIG: ChartConfig = {
+  trails: {
+    label: "Trails",
+    color: "var(--chart-2)",
+  },
+};
+
+const DIFFICULTY_CHART_CONFIG: ChartConfig = {
+  easy: {
+    label: "Easy",
+    color: "var(--chart-1)",
+  },
+  moderate: {
+    label: "Moderate",
+    color: "var(--chart-3)",
+  },
+  hard: {
+    label: "Hard",
+    color: "var(--chart-4)",
+  },
+};
+
+function truncateLabel(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 1))}...`;
+}
+
+function buildSelectedStateTrails(trails: Trail[], selectedStateAbbr: string): Trail[] {
+  if (!selectedStateAbbr) return [];
+
+  return trails.filter((trail) => {
+    return splitStateCodes(trail.state).includes(selectedStateAbbr);
+  });
+}
+
+function buildParkChartData(trails: Trail[]): ParkChartDatum[] {
+  const byPark = new Map<string, { fullPark: string; trails: number }>();
+
+  for (const trail of trails) {
+    const current = byPark.get(trail.parkCode);
+    if (current) {
+      current.trails += 1;
+    } else {
+      byPark.set(trail.parkCode, {
+        fullPark: trail.parkName,
+        trails: 1,
+      });
+    }
+  }
+
+  return [...byPark.entries()]
+    .map(([parkCode, value]) => ({
+      parkCode,
+      fullPark: value.fullPark,
+      park: truncateLabel(value.fullPark, 20),
+      trails: value.trails,
+    }))
+    .sort((a, b) => b.trails - a.trails || a.fullPark.localeCompare(b.fullPark))
+    .slice(0, 10);
+}
+
+function buildDifficultyChartData(trails: Trail[]): DifficultyChartDatum[] {
+  const counts: Record<DifficultyKey, number> = {
+    easy: 0,
+    moderate: 0,
+    hard: 0,
+  };
+
+  for (const trail of trails) {
+    if (trail.difficulty === "easy" || trail.difficulty === "moderate" || trail.difficulty === "hard") {
+      counts[trail.difficulty] += 1;
+    }
+  }
+
+  return [
+    { difficulty: "easy", value: counts.easy },
+    { difficulty: "moderate", value: counts.moderate },
+    { difficulty: "hard", value: counts.hard },
+  ];
 }
 
 function isStateGeometry(geometry: GeoJSON.Geometry): geometry is StateGeometry {
@@ -341,15 +446,14 @@ type DetailProps = {
 function StateDetailSvg({ feature }: DetailProps) {
   const baseFill = feature ? colorForState(feature.properties.abbr, "base") : "#94a3b8";
 
-  const path = useMemo(() => {
-    if (!feature) return "";
-
+  let path = "";
+  if (feature) {
     const bounds = boundsFromGeometry(feature.geometry);
-    if (!bounds) return "";
-
-    const project = makeProjector(bounds, 8);
-    return geometryToPath(feature.geometry, project);
-  }, [feature]);
+    if (bounds) {
+      const project = makeProjector(bounds, 8);
+      path = geometryToPath(feature.geometry, project);
+    }
+  }
 
   return (
     <svg
@@ -379,18 +483,20 @@ type OverviewProps = {
 };
 
 function UsOverviewSvg({ features, selectedStateAbbr, onSelectState }: OverviewProps) {
-  const projected = useMemo(() => {
-    const bounds = boundsFromCollection(features);
-    if (!bounds) return [] as Array<{ abbr: string; path: string; trailCount: number }>;
+  const projected: Array<{ abbr: string; path: string; trailCount: number }> = [];
+  const bounds = boundsFromCollection(features);
 
+  if (bounds) {
     const project = makeProjector(bounds, 8, "top");
 
-    return features.map((feature) => ({
-      abbr: feature.properties.abbr,
-      trailCount: feature.properties.trailCount,
-      path: geometryToPath(feature.geometry, project),
-    }));
-  }, [features]);
+    for (const feature of features) {
+      projected.push({
+        abbr: feature.properties.abbr,
+        trailCount: feature.properties.trailCount,
+        path: geometryToPath(feature.geometry, project),
+      });
+    }
+  }
 
   return (
     <svg
@@ -429,38 +535,93 @@ type Props = {
 };
 
 export function VisualMap({ trails }: Props) {
-  const trailCounts = useMemo(() => buildTrailCountByState(trails), [trails]);
+  const trailCounts = buildTrailCountByState(trails);
+  const stateFeatures = buildStateFeatures(trailCounts);
 
-  const stateFeatures = useMemo(() => buildStateFeatures(trailCounts), [trailCounts]);
-
-  const defaultStateAbbr = useMemo(() => {
-    if (!stateFeatures.length) return "";
-
+  let defaultStateAbbr = "";
+  if (stateFeatures.length > 0) {
     const ranked = [...stateFeatures].sort(
       (a, b) => b.properties.trailCount - a.properties.trailCount,
     );
+    defaultStateAbbr = ranked[0]?.properties.abbr ?? stateFeatures[0].properties.abbr;
+  }
 
-    return ranked[0]?.properties.abbr ?? stateFeatures[0].properties.abbr;
-  }, [stateFeatures]);
+  const autoCycleOrder = [...stateFeatures]
+    .sort((a, b) => b.properties.trailCount - a.properties.trailCount)
+    .map((feature) => feature.properties.abbr);
+  const autoCycleOrderKey = autoCycleOrder.join(",");
 
-  const [selectedStateAbbr, setSelectedStateAbbr] = useState("");
+  const [selectedStateAbbr, setSelectedStateAbbr] = useState(defaultStateAbbr);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [autoCountdown, setAutoCountdown] = useState(5);
 
   useEffect(() => {
-    if (!selectedStateAbbr && defaultStateAbbr) {
-      setSelectedStateAbbr(defaultStateAbbr);
-    }
-  }, [defaultStateAbbr, selectedStateAbbr]);
+    const cycleOrder = autoCycleOrderKey ? autoCycleOrderKey.split(",") : [];
 
-  const selectedFeature = useMemo(
-    () =>
-      stateFeatures.find((feature) => feature.properties.abbr === selectedStateAbbr) ??
-      stateFeatures[0] ??
-      null,
-    [selectedStateAbbr, stateFeatures],
-  );
+    if (!isAutoPlaying || cycleOrder.length <= 1) {
+      return;
+    }
+
+    let remainingSeconds = 5;
+
+    const timer = window.setInterval(() => {
+      remainingSeconds -= 1;
+
+      if (remainingSeconds <= 0) {
+        setSelectedStateAbbr((current) => {
+          const active = current || cycleOrder[0] || "";
+          const index = cycleOrder.indexOf(active);
+
+          if (index < 0) {
+            return cycleOrder[0] || active;
+          }
+
+          return cycleOrder[(index + 1) % cycleOrder.length] || active;
+        });
+
+        remainingSeconds = 5;
+      }
+
+      setAutoCountdown(remainingSeconds);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [isAutoPlaying, autoCycleOrderKey]);
+
+  const handleSelectState = (abbr: string) => {
+    setSelectedStateAbbr(abbr);
+    if (isAutoPlaying) {
+      setIsAutoPlaying(false);
+      setAutoCountdown(5);
+    }
+  };
+
+  const selectedFeature =
+    stateFeatures.find((feature) => feature.properties.abbr === selectedStateAbbr) ??
+    stateFeatures[0] ??
+    null;
+
+  const selectedStateCode = selectedFeature?.properties.abbr ?? "";
+  const selectedStateTrails = buildSelectedStateTrails(trails, selectedStateCode);
+  const parkChartData = buildParkChartData(selectedStateTrails);
+  const difficultyChartData = buildDifficultyChartData(selectedStateTrails);
+
+  const selectedParkCount = new Set(selectedStateTrails.map((trail) => trail.parkCode)).size;
+  const selectedTrailCount = selectedStateTrails.length;
+  const averageTrailsPerPark =
+    selectedParkCount > 0
+      ? Math.round((selectedTrailCount / selectedParkCount) * 10) / 10
+      : 0;
+  const stateTrailSharePercent =
+    trails.length > 0
+      ? Math.round((selectedTrailCount / trails.length) * 1000) / 10
+      : 0;
+
+  const difficultyHasValues = difficultyChartData.some((item) => item.value > 0);
+  const topPark = parkChartData[0] ?? null;
 
   return (
-    <div className="min-h-svh w-full bg-background p-3 sm:p-4 lg:p-5">
+    <div className="h-svh w-full overflow-y-auto bg-background p-3 sm:p-4 lg:p-5">
       <div className="mx-auto max-w-[94rem]">
         <h1 className="text-center text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           Exploring the Trails and Nature of America&apos;s National Parks
@@ -477,16 +638,132 @@ export function VisualMap({ trails }: Props) {
           </section>
 
           <section className="flex flex-col p-1">
-            <p className="pb-0.5 text-center text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              United States
-            </p>
+            <div className="flex items-center justify-between pb-1">
+              <p className="text-center text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                United States
+              </p>
+              <Button
+                variant={isAutoPlaying ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setIsAutoPlaying((current) => !current);
+                  setAutoCountdown(5);
+                }}
+                aria-label={isAutoPlaying ? "Pause automatic state playback" : "Start automatic state playback"}
+              >
+                {isAutoPlaying ? `Pause Auto (${autoCountdown}s)` : "Auto Play 5s"}
+              </Button>
+            </div>
             <div className="overflow-hidden rounded-xl aspect-[10/7]">
               <UsOverviewSvg
                 features={stateFeatures}
                 selectedStateAbbr={selectedStateAbbr}
-                onSelectState={setSelectedStateAbbr}
+                onSelectState={handleSelectState}
               />
             </div>
+          </section>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[0.95fr_1.4fr_1fr]">
+          <section className="p-2">
+            <h2 className="text-base font-semibold text-card-foreground">State Snapshot</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Updates whenever you select a new state.
+            </p>
+
+            <dl className="mt-3 grid gap-3">
+              <div className="flex items-end justify-between border-b border-border/60 pb-2">
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Trails</dt>
+                <dd className="text-2xl font-semibold tabular-nums text-foreground">{selectedTrailCount.toLocaleString()}</dd>
+              </div>
+              <div className="flex items-end justify-between border-b border-border/60 pb-2">
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Parks</dt>
+                <dd className="text-2xl font-semibold tabular-nums text-foreground">{selectedParkCount.toLocaleString()}</dd>
+              </div>
+              <div className="flex items-end justify-between border-b border-border/60 pb-2">
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Trails / Park</dt>
+                <dd className="text-2xl font-semibold tabular-nums text-foreground">{averageTrailsPerPark.toLocaleString()}</dd>
+              </div>
+              <div className="flex items-end justify-between">
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Share of US Trails</dt>
+                <dd className="text-2xl font-semibold tabular-nums text-foreground">{stateTrailSharePercent}%</dd>
+              </div>
+            </dl>
+
+            <p className="mt-4 text-xs text-muted-foreground">
+              Top park: <span className="font-medium text-foreground">{topPark?.fullPark ?? "-"}</span>
+            </p>
+          </section>
+
+          <section className="p-2">
+            <h2 className="text-base font-semibold text-card-foreground">Top Parks by Trails</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Top 10 parks in {selectedFeature?.properties.name ?? "the selected state"}</p>
+
+            {parkChartData.length > 0 ? (
+              <ChartContainer config={PARKS_CHART_CONFIG} className="mt-3 h-[280px] w-full aspect-auto">
+                <BarChart data={parkChartData} layout="vertical" margin={{ top: 6, right: 20, bottom: 6, left: 12 }}>
+                  <CartesianGrid horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="park"
+                    tickLine={false}
+                    axisLine={false}
+                    width={160}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        indicator="line"
+                        labelFormatter={(_, payload) => {
+                          const item = payload?.[0]?.payload as ParkChartDatum | undefined;
+                          return item?.fullPark ?? "";
+                        }}
+                      />
+                    }
+                  />
+                  <Bar dataKey="trails" fill="var(--color-trails)" radius={5} isAnimationActive={false}>
+                    <LabelList dataKey="trails" position="right" fontSize={10} className="fill-muted-foreground" />
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <div className="mt-3 flex h-[280px] items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+                No park trail data available for this state.
+              </div>
+            )}
+          </section>
+
+          <section className="p-2">
+            <h2 className="text-base font-semibold text-card-foreground">Difficulty Mix</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Easy vs moderate vs hard trails</p>
+
+            {difficultyHasValues ? (
+              <ChartContainer config={DIFFICULTY_CHART_CONFIG} className="mt-3 h-[280px] w-full aspect-auto">
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent nameKey="difficulty" labelKey="difficulty" />} />
+                  <Pie
+                    data={difficultyChartData}
+                    dataKey="value"
+                    nameKey="difficulty"
+                    innerRadius={58}
+                    outerRadius={96}
+                    strokeWidth={2}
+                    isAnimationActive={false}
+                  >
+                    {difficultyChartData.map((entry) => (
+                      <Cell key={entry.difficulty} fill={`var(--color-${entry.difficulty})`} />
+                    ))}
+                  </Pie>
+                  <ChartLegend content={<ChartLegendContent nameKey="difficulty" className="flex-wrap gap-3" />} />
+                </PieChart>
+              </ChartContainer>
+            ) : (
+              <div className="mt-3 flex h-[280px] items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+                No difficulty data available for this state.
+              </div>
+            )}
           </section>
         </div>
       </div>
