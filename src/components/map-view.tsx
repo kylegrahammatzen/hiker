@@ -968,14 +968,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
         s.selectedZoomBaseline = null;
 
         map.setFilter("trails-selected", ["==", ["get", "id"], ""]);
-        hideBaseBoundaries(map);
         hideSelectedBoundary(map);
-
-        const restoreLayers = ["trails-clusters", "trails-cluster-count", "trails-unclustered", "trails-state-points", "parks-points", "us-states-outline"];
-        for (const layer of restoreLayers) {
-          if (!map.getLayer(layer)) continue;
-          map.setLayoutProperty(layer, "visibility", "visible");
-        }
 
         applyGroupMode(map, s.trails, s.groupMode, s.focusedParkCode, s.isDark);
         flyToDefaultView(map, 450);
@@ -1006,15 +999,6 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    if (selectedId) {
-      const hiddenLayers = ["trails-clusters", "trails-cluster-count", "trails-unclustered", "trails-state-points", "parks-points", "spiderfy-points", "spiderfy-legs"];
-      for (const layer of hiddenLayers) {
-        if (!map.getLayer(layer)) continue;
-        map.setLayoutProperty(layer, "visibility", "none");
-      }
-      return;
-    }
-
     applyGroupMode(map, trails, groupMode, focusedParkCode, state.current.isDark);
   }, [groupMode, trails, selectedId, focusedParkCode]);
 
@@ -1024,51 +1008,32 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     if (!map || !map.isStyleLoaded()) return;
     if (!map.getLayer("trails-selected")) return;
 
-    const hiddenWhenSelected = [
-      "trails-clusters",
-      "trails-cluster-count",
-      "trails-unclustered",
-      "trails-state-points",
-      "parks-points",
-      "us-states-outline",
-      "spiderfy-points",
-      "spiderfy-legs",
-    ];
-
     if (selectedId) {
-      hideBaseBoundaries(map);
-
-      for (const layer of hiddenWhenSelected) {
-        if (map.getLayer(layer)) map.setLayoutProperty(layer, "visibility", "none");
-      }
       clearSpiderfy(map);
       state.current.spiderfied = false;
 
       map.setFilter("trails-selected", ["==", ["get", "id"], selectedId]);
       const trail = trails.find((t) => t.id === selectedId);
       if (trail) {
-        state.current.selectedZoomBaseline = SELECTED_TRAIL_ZOOM;
         showSelectedBoundary(map, trail.parkCode);
         map.flyTo({
           center: [trail.coordinates.lng, trail.coordinates.lat],
           zoom: SELECTED_TRAIL_ZOOM,
           duration: 800,
         });
+        const capturedId = selectedId;
+        map.once("moveend", () => {
+          if (state.current.selectedId === capturedId) {
+            state.current.selectedZoomBaseline = map.getZoom();
+          }
+        });
       }
     } else {
       state.current.selectedZoomBaseline = null;
 
-      hideBaseBoundaries(map);
-
-      for (const layer of hiddenWhenSelected) {
-        if (!map.getLayer(layer)) continue;
-        map.setLayoutProperty(layer, "visibility", "visible");
-      }
-
-      applyGroupMode(map, trails, state.current.groupMode, state.current.focusedParkCode, state.current.isDark);
-
       map.setFilter("trails-selected", ["==", ["get", "id"], ""]);
       hideSelectedBoundary(map);
+      applyGroupMode(map, trails, state.current.groupMode, state.current.focusedParkCode, state.current.isDark);
     }
   }, [selectedId, trails, focusedParkCode]);
 
