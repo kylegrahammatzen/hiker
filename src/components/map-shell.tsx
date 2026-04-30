@@ -42,7 +42,7 @@ function CompassRose({ bearing, onClick }: { bearing: number; onClick: () => voi
   );
 }
 
-export function MapShell({ trails, boundaries, initialParkCode }: { trails: Trail[]; boundaries: GeoJSON.FeatureCollection; initialParkCode: string | null }) {
+export function MapShell({ trails, boundaries }: { trails: Trail[]; boundaries: GeoJSON.FeatureCollection }) {
   const mapViewRef = useRef<MapViewHandle>(null);
   const { resolvedTheme, setTheme } = useTheme();
   const { open: panelOpen } = usePanel();
@@ -147,7 +147,6 @@ export function MapShell({ trails, boundaries, initialParkCode }: { trails: Trai
         boundaries={boundaries}
         theme={mounted ? resolvedTheme : undefined}
         mapStyle={mapStyle}
-        initialParkCode={initialParkCode}
       />
     </div>
   );

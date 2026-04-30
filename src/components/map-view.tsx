@@ -15,7 +15,6 @@ type MapViewProps = {
   boundaries: GeoJSON.FeatureCollection;
   theme?: string;
   mapStyle: MapStyle;
-  initialParkCode?: string | null;
   ref?: React.Ref<MapViewHandle>;
 };
 
@@ -645,7 +644,7 @@ type MapState = {
   focusedParkCode: string | null;
 };
 
-export default function MapView({ trails, boundaries, theme, mapStyle, initialParkCode, ref }: MapViewProps) {
+export default function MapView({ trails, boundaries, theme, mapStyle, ref }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const initialIsDark = getInitialIsDark(theme);
@@ -673,13 +672,14 @@ export default function MapView({ trails, boundaries, theme, mapStyle, initialPa
   const groupMode = useGroupMode();
   const actions = useTrailActions();
 
-  // Keep mutable state in sync
-  state.current.trails = trails;
-  state.current.boundaries = boundaries;
-  state.current.isDark = getInitialIsDark(theme);
-  state.current.selectedId = selectedId;
-  state.current.groupMode = groupMode;
-  state.current.focusedParkCode = focusedParkCode;
+  useEffect(() => {
+    state.current.trails = trails;
+    state.current.boundaries = boundaries;
+    state.current.isDark = getInitialIsDark(theme);
+    state.current.selectedId = selectedId;
+    state.current.groupMode = groupMode;
+    state.current.focusedParkCode = focusedParkCode;
+  }, [trails, boundaries, theme, selectedId, groupMode, focusedParkCode]);
 
   useEffect(() => {
     if (!ref) return;
@@ -931,12 +931,28 @@ export default function MapView({ trails, boundaries, theme, mapStyle, initialPa
       map.on("click", "trails-unclustered", (e) => {
         const feature = e.features?.[0];
         if (!feature) return;
+        if (s.groupMode === "park") {
+          const parkCode = String(feature.properties.parkCode ?? "").toLowerCase();
+          if (!parkCode) return;
+          actions.setSelectedTrailId(null);
+          actions.setGroupMode("park");
+          actions.setFocusedParkCode(parkCode);
+          return;
+        }
         actions.setSelectedTrailId(feature.properties.id);
       });
 
       map.on("click", "trails-state-points", (e) => {
         const feature = e.features?.[0];
         if (!feature) return;
+        if (s.groupMode === "park") {
+          const parkCode = String(feature.properties.parkCode ?? "").toLowerCase();
+          if (!parkCode) return;
+          actions.setSelectedTrailId(null);
+          actions.setGroupMode("park");
+          actions.setFocusedParkCode(parkCode);
+          return;
+        }
         actions.setSelectedTrailId(feature.properties.id);
       });
 
@@ -1109,28 +1125,9 @@ export default function MapView({ trails, boundaries, theme, mapStyle, initialPa
     flyToDefaultView(map, 800);
   }, [resetSignal]);
 
-  // Initial park focus
-  useEffect(() => {
-    if (!loaded || !initialParkCode) return;
-    const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-    const parkTrails = trails.filter((t) => t.parkCode === initialParkCode);
-    if (parkTrails.length === 0) return;
-    const lats = parkTrails.map((t) => t.coordinates.lat);
-    const lngs = parkTrails.map((t) => t.coordinates.lng);
-    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const maxDiff = Math.max(Math.max(...lats) - Math.min(...lats), Math.max(...lngs) - Math.min(...lngs));
-    const zoom = maxDiff > 0 ? Math.max(8, 11 - Math.log2(maxDiff + 0.1)) : 10;
-    actions.setLoadingPark(true);
-    map.flyTo({ center: [centerLng, centerLat], zoom, duration: 800 });
-    actions.setGroupMode("park");
-    actions.setFocusedParkCode(initialParkCode);
-  }, [loaded, initialParkCode, trails]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Park focus changes
   useEffect(() => {
-    if (!loaded || !focusedParkCode || focusedParkCode === initialParkCode) return;
+    if (!loaded || !focusedParkCode) return;
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
@@ -1142,8 +1139,10 @@ export default function MapView({ trails, boundaries, theme, mapStyle, initialPa
     const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
     const maxDiff = Math.max(Math.max(...lats) - Math.min(...lats), Math.max(...lngs) - Math.min(...lngs));
     const zoom = maxDiff > 0 ? Math.max(8, 11 - Math.log2(maxDiff + 0.1)) : 10;
+    actions.setLoadingPark(true);
+    actions.setGroupMode("park");
     map.flyTo({ center: [centerLng, centerLat], zoom, duration: 800 });
-  }, [focusedParkCode, loaded, initialParkCode, trails]);
+  }, [focusedParkCode, loaded, trails]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clear park focus
   useEffect(() => {

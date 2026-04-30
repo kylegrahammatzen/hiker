@@ -24,11 +24,14 @@ import type { MapStyle } from "@/lib/trail-context";
 import { groupTrails, computeDisplayGroups, type GroupMode } from "@/lib/trail-grouping";
 import type { Trail } from "@/lib/types";
 
-export function AppSidebar({ trails = [], initialParkCode }: { trails?: Trail[]; initialParkCode?: string | null }) {
+const EMPTY_TRAILS: Trail[] = [];
+
+export function AppSidebar({ trails = EMPTY_TRAILS }: { trails?: Trail[] }) {
   const [search, setSearch] = useQueryState(
     "search",
     parseAsString.withDefault(""),
   );
+  const [parkQuery] = useQueryState("park", parseAsString);
   const deferredSearch = useDeferredValue(search);
   const selectedId = useSelectedTrailId();
   const mapLoaded = useMapLoaded();
@@ -37,7 +40,7 @@ export function AppSidebar({ trails = [], initialParkCode }: { trails?: Trail[];
   const groupMode = useGroupMode();
   const mapStyle = useMapStyle();
   const focusedParkCode = useFocusedParkCode();
-  const focusedParkCodeKey = focusedParkCode?.toLowerCase() ?? (!mapLoaded ? initialParkCode?.toLowerCase() ?? null : null);
+  const focusedParkCodeKey = focusedParkCode?.toLowerCase() ?? parkQuery?.toLowerCase() ?? null;
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
