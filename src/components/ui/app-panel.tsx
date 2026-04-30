@@ -95,7 +95,7 @@ function AppPanel({
       data-state={open ? "open" : "closed"}
       style={{ width: PANEL_WIDTH } as React.CSSProperties}
       className={cn(
-        "bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-20 flex flex-col border-r border-sidebar-border transition-transform duration-200 ease-in-out",
+        "bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-20 flex flex-col border-r border-sidebar-border transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform motion-reduce:transition-none",
         open ? "translate-x-0" : "-translate-x-full",
         className
       )}
@@ -145,7 +145,7 @@ function AppPanelInset({
       data-slot="app-panel-inset"
       style={{ "--panel-width": PANEL_WIDTH } as React.CSSProperties}
       className={cn(
-        "relative flex w-full flex-1 flex-col transition-[margin-left] duration-200 ease-in-out",
+        "relative flex w-full flex-1 flex-col",
         open ? "md:ml-[var(--panel-width)]" : "md:ml-0",
         className
       )}

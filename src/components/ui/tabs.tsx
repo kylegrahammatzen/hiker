@@ -28,7 +28,7 @@ const TabsIndicator = React.forwardRef<
   <BaseTabs.Indicator
     ref={ref}
     className={cn(
-      "absolute top-0.5 bottom-0.5 left-[var(--active-tab-left)] w-[var(--active-tab-width)] rounded bg-background shadow-sm transition-all duration-150",
+      "absolute top-0.5 bottom-0.5 left-[var(--active-tab-left)] w-[var(--active-tab-width)] rounded bg-background shadow-sm transition-[left,width] duration-180 ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none",
       className,
     )}
     {...props}
@@ -43,7 +43,7 @@ const TabsTrigger = React.forwardRef<
   <BaseTabs.Tab
     ref={ref}
     className={cn(
-      "relative z-10 cursor-pointer rounded px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors select-none",
+      "relative z-10 cursor-pointer rounded px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors duration-150 ease-out select-none motion-reduce:transition-none",
       "data-[selected]:text-foreground",
       "hover:text-foreground",
       className,

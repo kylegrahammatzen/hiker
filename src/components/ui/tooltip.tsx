@@ -36,8 +36,8 @@ const TooltipPopup = React.forwardRef<
       "border border-border/50",
       "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
       "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
-      "transition-[transform,opacity] duration-150",
-      "@media(prefers-reduced-motion:reduce){transition-duration:0ms}",
+      "transition-[transform,opacity] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform",
+      "motion-reduce:transition-none motion-reduce:data-[starting-style]:scale-100 motion-reduce:data-[ending-style]:scale-100",
       className,
     )}
     {...props}

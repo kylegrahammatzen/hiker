@@ -21,17 +21,17 @@ export const PanelDialog = (props: PanelDialogProps) => {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <DialogPrimitive.Trigger
-        className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        className="text-xs text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground motion-reduce:transition-none cursor-pointer"
       >
         {props.triggerLabel ?? "View more"}
       </DialogPrimitive.Trigger>
 
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-opacity duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none" />
         <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-4">
           <DialogPrimitive.Popup
             className={cn(
-              "relative w-full max-w-sm overflow-hidden rounded-xl border bg-background shadow-xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95",
+              "relative w-full max-w-sm overflow-hidden rounded-xl border bg-background shadow-xl transition-[opacity,scale] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95 motion-reduce:transition-none motion-reduce:data-ending-style:scale-100 motion-reduce:data-starting-style:scale-100",
               props.popupClassName,
             )}
           >
@@ -39,7 +39,7 @@ export const PanelDialog = (props: PanelDialogProps) => {
               <DialogPrimitive.Title className="text-sm font-semibold">{props.title}</DialogPrimitive.Title>
               <DialogPrimitive.Close
                 aria-label="Close"
-                render={<Button size="icon" variant="ghost" className="rounded-full" />}
+                render={<Button size="icon-sm" variant="ghost" />}
               >
                 <XIcon />
               </DialogPrimitive.Close>
