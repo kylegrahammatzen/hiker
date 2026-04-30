@@ -1,5 +1,7 @@
 import { join } from "path";
 import { existsSync } from "fs";
+import sharp from "sharp";
+import { rgbaToThumbHash } from "thumbhash";
 import type { Trail, TrailImage } from "../src/lib/types";
 
 const QUICK_CHECK = process.argv.includes("--quick");
@@ -253,6 +255,53 @@ async function validateImageUrl(url: string): Promise<boolean> {
   }
 }
 
+function toBase64(bytes: Uint8Array): string {
+  return Buffer.from(bytes).toString("base64");
+}
+
+async function generateThumbHash(url: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return undefined;
+
+    const input = Buffer.from(await res.arrayBuffer());
+    const { data, info } = await sharp(input)
+      .rotate()
+      .resize(100, 100, { fit: "inside", withoutEnlargement: true })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    return toBase64(rgbaToThumbHash(info.width, info.height, data));
+  } catch {
+    return undefined;
+  }
+}
+
+async function addMissingThumbHashes(trails: Trail[]): Promise<void> {
+  const cache = new Map<string, string | undefined>();
+  let generated = 0;
+
+  for (const trail of trails) {
+    for (const image of trail.images ?? []) {
+      if (image.thumbHash) continue;
+
+      if (!cache.has(image.url)) {
+        cache.set(image.url, await generateThumbHash(image.url));
+        await Bun.sleep(25);
+      }
+
+      const thumbHash = cache.get(image.url);
+      if (thumbHash) {
+        image.thumbHash = thumbHash;
+        generated += 1;
+      }
+    }
+  }
+
+  if (generated > 0) console.log(`Generated ${generated} ThumbHash placeholders`);
+}
+
 function collectImages(
   hikeImages: NPSImage[] = [],
   parkImages: NPSImage[] = [],
@@ -492,6 +541,7 @@ async function runQuickImageValidation(outputPath: string): Promise<void> {
     for (const image of trail.images ?? []) {
       const valid = await validateImageUrl(image.url);
       if (valid) {
+        image.thumbHash ??= await generateThumbHash(image.url);
         validImages.push(image);
       } else {
         removed += 1;
@@ -582,6 +632,9 @@ async function main() {
       a.name.localeCompare(b.name)
     );
   });
+
+  console.log("Generating missing ThumbHash placeholders...");
+  await addMissingThumbHashes(trails);
 
   const stateCounts = summarizeStateCoverage(trails);
   const coveredStates = [...stateCounts.keys()].sort();

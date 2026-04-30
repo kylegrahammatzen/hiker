@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { thumbHashToDataURL } from "thumbhash";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import type { Trail } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,35 @@ const difficultyLabel = {
   hard: "Hard",
 };
 
+const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+function base64ToBytes(value: string): Uint8Array {
+  const clean = value.replace(/=+$/, "");
+  const bytes: number[] = [];
+  let buffer = 0;
+  let bits = 0;
+
+  for (const char of clean) {
+    const index = BASE64_CHARS.indexOf(char);
+    if (index === -1) continue;
+
+    buffer = (buffer << 6) | index;
+    bits += 6;
+
+    if (bits >= 8) {
+      bits -= 8;
+      bytes.push((buffer >> bits) & 0xff);
+    }
+  }
+
+  return new Uint8Array(bytes);
+}
+
+function thumbHashPlaceholder(thumbHash?: string): string | undefined {
+  if (!thumbHash) return undefined;
+  return thumbHashToDataURL(base64ToBytes(thumbHash));
+}
+
 function ImageGallery({ trail }: { trail: Trail }) {
   const allImages: TrailImageType[] =
     trail.images?.length > 0
@@ -65,6 +95,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
   const currentImage = validImages[currentIndex] ?? null;
   const isCurrentLoaded = currentImage ? loadedUrls.has(currentImage.url) : false;
   const isFullscreenOpen = hasImages && isFullscreenRequested;
+  const placeholder = thumbHashPlaceholder(currentImage?.thumbHash);
 
   const handleImageError = (url: string) => {
     setFailedUrls((prev) => new Set(prev).add(url));
@@ -106,7 +137,6 @@ function ImageGallery({ trail }: { trail: Trail }) {
       >
         {hasImages ? (
           <>
-            {/* Skeleton while loading */}
             {!isCurrentLoaded && (
               <div className="absolute inset-0 animate-pulse bg-muted" />
             )}
@@ -115,9 +145,10 @@ function ImageGallery({ trail }: { trail: Trail }) {
               src={currentImage.url}
               alt={currentImage.alt}
               fill
-              unoptimized
-              priority
-              className={cn("object-cover transition-opacity", isCurrentLoaded ? "opacity-100" : "opacity-0")}
+              sizes="(max-width: 768px) 100vw, 320px"
+              placeholder={placeholder ? "blur" : "empty"}
+              blurDataURL={placeholder}
+              className={cn("object-cover transition-opacity", isCurrentLoaded || placeholder ? "opacity-100" : "opacity-0")}
               onLoad={() => handleImageLoad(currentImage.url)}
               onError={() => handleImageError(currentImage.url)}
             />
@@ -132,7 +163,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
             variant="ghost"
             size="sm"
             onClick={() => setIsFullscreenRequested(true)}
-            className="absolute right-2 top-2 rounded-full bg-black/40 px-2.5 text-white hover:bg-black/60 backdrop-blur-sm"
+            className="absolute right-2 top-2 rounded-full border border-border/60 bg-background/80 px-2.5 text-foreground shadow-sm backdrop-blur-sm hover:bg-background/95"
           >
             Full screen
           </Button>
@@ -143,7 +174,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
               variant="ghost"
               size="icon-sm"
               onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-background/80 text-foreground shadow-sm backdrop-blur-sm hover:bg-background/95"
             >
               <CaretLeftIcon />
             </Button>
@@ -151,7 +182,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
               variant="ghost"
               size="icon-sm"
               onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-background/80 text-foreground shadow-sm backdrop-blur-sm hover:bg-background/95"
             >
               <CaretRightIcon />
             </Button>
@@ -178,9 +209,9 @@ function ImageGallery({ trail }: { trail: Trail }) {
 
       <DialogPrimitive.Root open={isFullscreenOpen} onOpenChange={setIsFullscreenRequested}>
         <DialogPrimitive.Portal>
-          <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+          <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-background/75 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
           <DialogPrimitive.Viewport className="fixed inset-0 z-[60] grid place-items-center p-3 sm:p-6">
-            <DialogPrimitive.Popup className="relative flex w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-white/15 bg-black/95 text-white shadow-2xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95">
+            <DialogPrimitive.Popup className="relative flex w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-2xl transition-[opacity,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95">
               <DialogPrimitive.Title className="sr-only">{trail.name} image carousel</DialogPrimitive.Title>
               <DialogPrimitive.Description className="sr-only">
                 Full-screen image carousel for this trail.
@@ -189,13 +220,13 @@ function ImageGallery({ trail }: { trail: Trail }) {
               <DialogPrimitive.Close
                 aria-label="Close full screen"
                 className="absolute right-3 top-3 z-20"
-                render={<Button size="icon-sm" variant="ghost" className="rounded-full bg-black/48 text-white hover:bg-black/72" />}
+                render={<Button size="icon-sm" variant="ghost" className="rounded-full border border-border/60 bg-background/80 text-foreground shadow-sm backdrop-blur-sm hover:bg-background/95" />}
               >
                 <XIcon />
               </DialogPrimitive.Close>
 
               <div
-                className="relative h-[min(72vh,780px)] w-full bg-black"
+                className="relative h-[min(72vh,780px)] w-full bg-muted"
                 onTouchStart={(e) => {
                   touchStart.current = e.touches[0]!.clientX;
                 }}
@@ -206,7 +237,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
                   if (delta < -50) next();
                 }}
               >
-                {!isCurrentLoaded && <div className="absolute inset-0 animate-pulse bg-white/8" />}
+                {!isCurrentLoaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
 
                 {hasImages && (
                   <Image
@@ -214,8 +245,10 @@ function ImageGallery({ trail }: { trail: Trail }) {
                     src={currentImage.url}
                     alt={currentImage.alt}
                     fill
-                    unoptimized
-                    className={cn("object-contain transition-opacity duration-200", isCurrentLoaded ? "opacity-100" : "opacity-0")}
+                    sizes="100vw"
+                    placeholder={placeholder ? "blur" : "empty"}
+                    blurDataURL={placeholder}
+                    className={cn("object-contain transition-opacity duration-200", isCurrentLoaded || placeholder ? "opacity-100" : "opacity-0")}
                     onLoad={() => handleImageLoad(currentImage.url)}
                     onError={() => handleImageError(currentImage.url)}
                   />
@@ -227,7 +260,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
                       variant="ghost"
                       size="icon"
                       onClick={prev}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 text-white hover:bg-black/70"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-background/80 text-foreground shadow-sm backdrop-blur-sm hover:bg-background/95"
                     >
                       <CaretLeftIcon />
                     </Button>
@@ -235,7 +268,7 @@ function ImageGallery({ trail }: { trail: Trail }) {
                       variant="ghost"
                       size="icon"
                       onClick={next}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 text-white hover:bg-black/70"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-background/80 text-foreground shadow-sm backdrop-blur-sm hover:bg-background/95"
                     >
                       <CaretRightIcon />
                     </Button>
@@ -244,20 +277,20 @@ function ImageGallery({ trail }: { trail: Trail }) {
               </div>
 
               {hasImages && validImages.length > 1 && (
-                <div className="flex items-center justify-center gap-1.5 border-t border-white/10 px-4 py-3">
+                <div className="flex items-center justify-center gap-1.5 border-t border-border px-4 py-3">
                   {validImages.map((_, i) => (
                     <button
                       key={`fullscreen-dot-${i}`}
                       type="button"
                       onClick={() => setCurrent(i)}
-                      className={cn("size-2 rounded-full transition-colors", i === currentIndex ? "bg-white" : "bg-white/30")}
+                      className={cn("size-2 rounded-full transition-colors", i === currentIndex ? "bg-primary" : "bg-muted-foreground/30")}
                     />
                   ))}
                 </div>
               )}
 
               {hasImages && currentImage?.caption && (
-                <p className="border-t border-white/10 px-4 py-3 text-center text-sm text-white/80 italic">
+                <p className="border-t border-border px-4 py-3 text-center text-sm text-muted-foreground italic">
                   {currentImage.caption}
                 </p>
               )}

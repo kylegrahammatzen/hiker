@@ -2,6 +2,7 @@ export type TrailImage = {
   url: string;
   alt: string;
   caption: string;
+  thumbHash?: string;
 };
 
 export type Trail = {
