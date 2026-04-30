@@ -4,18 +4,17 @@ import type { WildlifeData } from "@/app/api/wildlife/route";
 import type { AlertsData } from "@/app/api/alerts/route";
 
 type AsyncState<T> = { data: T | null; loading: boolean; error: string | null };
+type FetchResult<T> = { url: string; data: T | null; error: string | null };
+
+const IDLE_STATE = { data: null, loading: false, error: null } as const;
 
 function useFetch<T>(url: string | null): AsyncState<T> {
-  const [state, setState] = useState<AsyncState<T>>({ data: null, loading: false, error: null });
+  const [result, setResult] = useState<FetchResult<T> | null>(null);
 
   useEffect(() => {
-    if (!url) {
-      setState({ data: null, loading: false, error: null });
-      return;
-    }
+    if (!url) return;
 
     let cancelled = false;
-    setState({ data: null, loading: true, error: null });
 
     fetch(url)
       .then((res) => {
@@ -23,16 +22,21 @@ function useFetch<T>(url: string | null): AsyncState<T> {
         return res.json() as Promise<T>;
       })
       .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: null });
+        if (!cancelled) setResult({ url, data, error: null });
       })
       .catch((err) => {
-        if (!cancelled) setState({ data: null, loading: false, error: err.message });
+        if (!cancelled) setResult({ url, data: null, error: err.message });
       });
 
     return () => { cancelled = true };
   }, [url]);
 
-  return state;
+  if (!url) return IDLE_STATE;
+  if (result?.url === url) {
+    return { data: result.data, loading: false, error: result.error };
+  }
+
+  return { data: null, loading: true, error: null };
 }
 
 export function useWeather(lat: number | undefined, lng: number | undefined) {

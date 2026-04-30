@@ -1,10 +1,9 @@
 import { getTrails, getBoundaries } from "@/lib/trails";
-import { MapShell } from "@/components/map-shell";
+import { MainApp } from "@/components/main-app";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ park?: string }> }) {
   const params = await searchParams;
-  const trails = getTrails();
-  const boundaries = getBoundaries();
+  const [trails, boundaries] = await Promise.all([getTrails(), getBoundaries()]);
 
-  return <MapShell trails={trails} boundaries={boundaries} initialParkCode={params.park ?? null} />;
+  return <MainApp trails={trails} boundaries={boundaries} initialParkCode={params.park ?? null} />;
 }

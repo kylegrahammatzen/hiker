@@ -12,6 +12,8 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useHasMounted } from "@/hooks/use-has-mounted";
 import type { Trail } from "@/lib/types";
 
 const DISPLAYED_STATE_ABBRS = new Set<string>([
@@ -538,6 +540,7 @@ type Props = {
 };
 
 export function VisualMap({ trails }: Props) {
+  const mounted = useHasMounted();
   const trailCounts = buildTrailCountByState(trails);
   const stateFeatures = buildStateFeatures(trailCounts);
 
@@ -617,6 +620,21 @@ export function VisualMap({ trails }: Props) {
 
     return () => window.clearInterval(timer);
   }, [isAnimateMode, autoCycleOrderKey]);
+
+  if (!mounted) {
+    return (
+      <div className="flex min-h-svh w-full items-center justify-center bg-background p-6">
+        <div className="grid w-full max-w-5xl gap-4 md:grid-cols-[1.3fr_0.7fr]">
+          <Skeleton className="h-[520px] rounded-xl" />
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSelectState = (abbr: string) => {
     setSelectedStateAbbr(abbr);

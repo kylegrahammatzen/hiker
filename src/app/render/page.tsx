@@ -27,9 +27,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RenderPage() {
-  const trails = getTrails();
-  const boundaries = getBoundaries();
+export default async function RenderPage() {
+  const [trails, boundaries] = await Promise.all([getTrails(), getBoundaries()]);
 
   return <RenderMap trails={trails} boundaries={boundaries} />;
 }

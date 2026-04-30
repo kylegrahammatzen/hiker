@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { CSPProvider } from "@base-ui/react/csp-provider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import { TrailProvider } from "@/lib/trail-context";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,11 +32,13 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <CSPProvider disableStyleElements>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <TrailProvider>
-              <TooltipProvider delay={400} closeDelay={0}>
-                {children}
-              </TooltipProvider>
-            </TrailProvider>
+            <NuqsAdapter>
+              <TrailProvider>
+                <TooltipProvider delay={400} closeDelay={0}>
+                  {children}
+                </TooltipProvider>
+              </TrailProvider>
+            </NuqsAdapter>
           </ThemeProvider>
         </CSPProvider>
       </body>

@@ -1,3 +1,5 @@
+"use server";
+
 import trailData from "@/data/trails.json";
 import boundaryData from "@/data/boundaries.json";
 import type { Trail } from "./types";
@@ -256,20 +258,20 @@ const FILTERED_BOUNDARIES: GeoJSON.FeatureCollection = {
   }),
 };
 
-export function getTrails(): Trail[] {
+export async function getTrails(): Promise<Trail[]> {
   return DEDUPED_TRAILS;
 }
 
-export function getBoundaries(): GeoJSON.FeatureCollection {
+export async function getBoundaries(): Promise<GeoJSON.FeatureCollection> {
   return FILTERED_BOUNDARIES;
 }
 
-export function getTrailById(id: string): Trail | undefined {
+export async function getTrailById(id: string): Promise<Trail | undefined> {
   return DEDUPED_TRAILS.find((trail) => trail.id === id);
 }
 
-export function getTrailsGeoJSON() {
-  const trails = getTrails();
+export async function getTrailsGeoJSON() {
+  const trails = await getTrails();
   return {
     type: "FeatureCollection" as const,
     features: trails.map((trail) => ({

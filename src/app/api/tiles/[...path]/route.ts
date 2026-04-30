@@ -50,8 +50,6 @@ export async function GET(
 
   const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
   const isJson = contentType.includes("application/json") || path[path.length - 1]?.endsWith(".json");
-  const isStyle = path[0] === "styles" && isJson;
-
   if (isJson) {
     const json = await upstream.text();
     const proxyBase = new URL("/api/tiles", request.url).toString();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Trail } from "@/lib/types";
@@ -69,7 +69,6 @@ type Props = {
 export function RenderMap({ trails, boundaries }: Props) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const [loaded, setLoaded] = useState(false);
 
   const stateEntries = [...new Set(trails.map((t) => t.state))]
     .sort()
@@ -91,8 +90,6 @@ export function RenderMap({ trails, boundaries }: Props) {
     });
 
     map.on("load", () => {
-      setLoaded(true);
-
       map.addSource("boundaries", { type: "geojson", data: boundaries });
       map.addLayer({
         id: "boundaries-fill",
@@ -165,7 +162,7 @@ export function RenderMap({ trails, boundaries }: Props) {
       <div className="flex w-80 shrink-0 flex-col border-r border-border bg-background">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            Exploring the Trails and Nature of America's National Parks
+            Exploring the Trails and Nature of America&apos;s National Parks
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Kyle Graham Matzen

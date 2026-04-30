@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/preview-card";
 import { cn } from "@/lib/utils";
 import { MapPinIcon, TrendUpIcon, RulerIcon, MountainsIcon } from "@phosphor-icons/react";
+import { HighlightedText } from "@/components/highlighted-text";
 
 const difficultyColor = {
   easy: "bg-success/16 text-success-foreground",
@@ -28,11 +29,13 @@ export function TrailCard({
   isSelected,
   onSelect,
   showLocation = true,
+  searchQuery = "",
 }: {
   trail: Trail;
   isSelected: boolean;
   onSelect: () => void;
   showLocation?: boolean;
+  searchQuery?: string;
 }) {
   return (
     <PreviewCard>
@@ -48,11 +51,13 @@ export function TrailCard({
           />
         }
       >
-        <p className="w-full min-w-0 text-sm font-medium leading-tight break-words">{trail.name}</p>
+        <p className="w-full min-w-0 text-sm font-medium leading-tight break-words">
+          <HighlightedText text={trail.name} query={searchQuery} />
+        </p>
         {showLocation && (
           <div className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground">
             <MapPinIcon className="size-3 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">{trail.location}</span>
+            <HighlightedText text={trail.location} query={searchQuery} className="min-w-0 flex-1 truncate" />
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">

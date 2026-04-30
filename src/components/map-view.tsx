@@ -5,6 +5,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Trail } from "@/lib/types";
 import { useSelectedTrailId, useResetSignal, useFocusedParkCode, useTrailActions, useGroupMode } from "@/lib/trail-context";
+import type { MapStyle } from "@/lib/trail-context";
 import type { GroupMode } from "@/lib/trail-grouping";
 import { Skeleton } from "@/components/ui/skeleton";
 import usStates from "@/data/us-states.json";
@@ -13,6 +14,7 @@ type MapViewProps = {
   trails: Trail[];
   boundaries: GeoJSON.FeatureCollection;
   theme?: string;
+  mapStyle: MapStyle;
   initialParkCode?: string | null;
   ref?: React.Ref<MapViewHandle>;
 };
@@ -26,7 +28,17 @@ export type MapViewHandle = {
   isAtDefaultView: () => boolean;
 };
 
-const STYLE_SATELLITE = "/api/tiles/styles/alidade_satellite.json";
+function getInitialIsDark(theme?: string) {
+  if (theme === "dark") return true;
+  if (theme === "light") return false;
+  if (typeof document === "undefined") return false;
+  return document.documentElement.classList.contains("dark");
+}
+
+function getMapStyleUrl(mapStyle: MapStyle, isDark: boolean) {
+  if (mapStyle === "satellite") return "/api/tiles/styles/alidade_satellite.json";
+  return isDark ? "/api/tiles/styles/alidade_smooth_dark.json" : "/api/tiles/styles/alidade_smooth.json";
+}
 
 export const DEFAULT_CENTER: [number, number] = [-98.5, 39.8];
 export const DEFAULT_ZOOM = 4.2;
@@ -633,13 +645,15 @@ type MapState = {
   focusedParkCode: string | null;
 };
 
-export default function MapView({ trails, boundaries, theme, initialParkCode, ref }: MapViewProps) {
+export default function MapView({ trails, boundaries, theme, mapStyle, initialParkCode, ref }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const initialIsDark = getInitialIsDark(theme);
+  const currentStyleUrlRef = useRef(getMapStyleUrl(mapStyle, initialIsDark));
   const state = useRef<MapState>({
     trails,
     boundaries,
-    isDark: theme === "dark",
+    isDark: initialIsDark,
     selectedId: null,
     selectedZoomBaseline: null,
     prevVisibleKey: "",
@@ -650,6 +664,8 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
   });
   const [loaded, setLoaded] = useState(false);
   const [cursor, setCursor] = useState<{ lng: number; lat: number } | null>(null);
+  const cursorFrameRef = useRef<number | null>(null);
+  const pendingCursorRef = useRef<{ lng: number; lat: number } | null>(null);
 
   const selectedId = useSelectedTrailId();
   const resetSignal = useResetSignal();
@@ -660,7 +676,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
   // Keep mutable state in sync
   state.current.trails = trails;
   state.current.boundaries = boundaries;
-  state.current.isDark = theme === "dark";
+  state.current.isDark = getInitialIsDark(theme);
   state.current.selectedId = selectedId;
   state.current.groupMode = groupMode;
   state.current.focusedParkCode = focusedParkCode;
@@ -695,7 +711,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: STYLE_SATELLITE,
+      style: currentStyleUrlRef.current,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       minZoom: DEFAULT_ZOOM,
@@ -728,6 +744,16 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
         s.prevVisibleKey = key;
         actions.setVisibleTrailIds(ids);
       }
+    }
+
+    function scheduleCursorUpdate(nextCursor: { lng: number; lat: number }) {
+      pendingCursorRef.current = nextCursor;
+      if (cursorFrameRef.current !== null) return;
+
+      cursorFrameRef.current = window.requestAnimationFrame(() => {
+        cursorFrameRef.current = null;
+        setCursor(pendingCursorRef.current);
+      });
     }
 
     map.on("load", () => {
@@ -921,6 +947,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
         if (!parkCode) return;
 
         actions.setSelectedTrailId(null);
+        actions.setGroupMode("park");
         actions.setFocusedParkCode(parkCode);
       });
 
@@ -981,18 +1008,39 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
       emitViewState();
     });
     map.on("mousemove", (e) => {
-      setCursor({ lng: e.lngLat.lng, lat: e.lngLat.lat });
+      scheduleCursorUpdate({ lng: e.lngLat.lng, lat: e.lngLat.lat });
     });
-    map.on("mouseout", () => setCursor(null));
+    map.on("mouseout", () => {
+      pendingCursorRef.current = null;
+      if (cursorFrameRef.current !== null) {
+        window.cancelAnimationFrame(cursorFrameRef.current);
+        cursorFrameRef.current = null;
+      }
+      setCursor(null);
+    });
 
     mapRef.current = map;
 
     return () => {
+      if (cursorFrameRef.current !== null) {
+        window.cancelAnimationFrame(cursorFrameRef.current);
+      }
       map.remove();
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+
+    const nextStyleUrl = getMapStyleUrl(mapStyle, getInitialIsDark(theme));
+    if (currentStyleUrlRef.current === nextStyleUrl) return;
+
+    currentStyleUrlRef.current = nextStyleUrl;
+    map.setStyle(nextStyleUrl);
+  }, [mapStyle, theme, loaded]);
 
   // Group mode changes
   useEffect(() => {
@@ -1076,6 +1124,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
     const zoom = maxDiff > 0 ? Math.max(8, 11 - Math.log2(maxDiff + 0.1)) : 10;
     actions.setLoadingPark(true);
     map.flyTo({ center: [centerLng, centerLat], zoom, duration: 800 });
+    actions.setGroupMode("park");
     actions.setFocusedParkCode(initialParkCode);
   }, [loaded, initialParkCode, trails]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1107,7 +1156,7 @@ export default function MapView({ trails, boundaries, theme, initialParkCode, re
   return (
     <div className="relative h-full w-full">
       {!loaded && <Skeleton className="absolute inset-0 z-0 rounded-none" />}
-      <div ref={mapContainer} className="h-full w-full outline-none" tabIndex={-1} />
+      <div ref={mapContainer} className="h-full w-full bg-zinc-100 outline-none dark:bg-zinc-950" tabIndex={-1} />
 
       <div className="absolute bottom-0 left-0 right-0 z-10 flex items-end justify-between px-3 pb-2 pointer-events-none">
         <div className="flex items-center gap-3">

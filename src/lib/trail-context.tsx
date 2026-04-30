@@ -3,6 +3,8 @@
 import { createContext, useReducer, useEffect, use } from "react";
 import type { GroupMode } from "./trail-grouping";
 
+export type MapStyle = "standard" | "satellite";
+
 type State = {
   selectedTrailId: string | null;
   visibleTrailIds: string[];
@@ -15,6 +17,7 @@ type State = {
   resetSignal: number;
   isLoadingPark: boolean;
   groupMode: GroupMode;
+  mapStyle: MapStyle;
 };
 
 type Action =
@@ -25,7 +28,8 @@ type Action =
   | { type: "SET_MAP_VIEW"; view: { bearing: number; isAtDefault: boolean } }
   | { type: "RESET_VIEW" }
   | { type: "SET_LOADING_PARK"; loading: boolean }
-  | { type: "SET_GROUP_MODE"; mode: GroupMode };
+  | { type: "SET_GROUP_MODE"; mode: GroupMode }
+  | { type: "SET_MAP_STYLE"; style: MapStyle };
 
 type Actions = {
   setSelectedTrailId: (id: string | null) => void;
@@ -36,6 +40,7 @@ type Actions = {
   resetView: () => void;
   setLoadingPark: (loading: boolean) => void;
   setGroupMode: (mode: GroupMode) => void;
+  setMapStyle: (style: MapStyle) => void;
 };
 
 function readHash(): string | null {
@@ -91,6 +96,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, isLoadingPark: action.loading };
     case "SET_GROUP_MODE":
       return { ...state, groupMode: action.mode };
+    case "SET_MAP_STYLE":
+      return { ...state, mapStyle: action.style };
   }
 }
 
@@ -106,6 +113,7 @@ const initialState: State = {
   resetSignal: 0,
   isLoadingPark: false,
   groupMode: "state",
+  mapStyle: "standard",
 };
 
 const StateContext = createContext<State>(initialState);
@@ -156,6 +164,9 @@ export function TrailProvider({ children }: { children: React.ReactNode }) {
     },
     setGroupMode(mode) {
       dispatch({ type: "SET_GROUP_MODE", mode });
+    },
+    setMapStyle(style) {
+      dispatch({ type: "SET_MAP_STYLE", style });
     },
   };
 
@@ -208,4 +219,8 @@ export function useIsLoadingPark() {
 
 export function useGroupMode() {
   return use(StateContext).groupMode;
+}
+
+export function useMapStyle() {
+  return use(StateContext).mapStyle;
 }

@@ -7,7 +7,7 @@ import type { Trail } from "@/lib/types";
 import { AppPanelTrigger, usePanel } from "@/components/ui/app-panel";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { useTrailActions, useMapView, useSelectedTrailId, useFocusedParkCode } from "@/lib/trail-context";
+import { useTrailActions, useMapView, useSelectedTrailId, useFocusedParkCode, useMapStyle } from "@/lib/trail-context";
 import MapView from "@/components/map-view";
 import type { MapViewHandle } from "@/components/map-view";
 import { useHasMounted } from "@/hooks/use-has-mounted";
@@ -50,6 +50,7 @@ export function MapShell({ trails, boundaries, initialParkCode }: { trails: Trai
   const mapView = useMapView();
   const selectedTrailId = useSelectedTrailId();
   const focusedParkCode = useFocusedParkCode();
+  const mapStyle = useMapStyle();
   const mounted = useHasMounted();
 
   useEffect(() => {
@@ -145,6 +146,7 @@ export function MapShell({ trails, boundaries, initialParkCode }: { trails: Trai
         trails={trails}
         boundaries={boundaries}
         theme={mounted ? resolvedTheme : undefined}
+        mapStyle={mapStyle}
         initialParkCode={initialParkCode}
       />
     </div>

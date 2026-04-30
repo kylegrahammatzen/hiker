@@ -14,7 +14,15 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
   },
   experimental: {
+    optimizePackageImports: [
+      "@phosphor-icons/react",
+      "@tanstack/react-virtual",
+      "nuqs",
+    ],
+    preloadEntriesOnStart: false,
     proxyTimeout: 30000,
+    turbopackFileSystemCacheForDev: true,
+    turbopackFileSystemCacheForBuild: true,
   },
 };
 

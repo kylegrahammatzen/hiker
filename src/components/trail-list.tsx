@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { MagnifyingGlassMinusIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { TrailCard } from "@/components/trail-card";
@@ -11,17 +11,18 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { sortTrails, type ParkGroup, type GroupMode } from "@/lib/trail-grouping";
+import { HighlightedText } from "@/components/highlighted-text";
 
 type Row =
   | { kind: "header"; group: ParkGroup }
   | { kind: "trail"; trail: ParkGroup["trails"][number]; parkName: string };
 
-function buildRows(groups: ParkGroup[], openPark: string | null): Row[] {
+function buildRows(groups: ParkGroup[], openPark: string | null, searchActive: boolean): Row[] {
   const rows: Row[] = [];
 
   for (const group of groups) {
     rows.push({ kind: "header", group });
-    if (openPark === group.parkName) {
+    if (searchActive || openPark === group.parkName) {
       for (const trail of sortTrails(group.trails)) {
         rows.push({ kind: "trail", trail, parkName: group.parkName });
       }
@@ -34,47 +35,39 @@ function buildRows(groups: ParkGroup[], openPark: string | null): Row[] {
 const HEADER_HEIGHT = 40;
 const TRAIL_HEIGHT = 72;
 
-export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]; groupMode?: GroupMode }) {
+export function TrailList({
+  groups,
+  groupMode = "state",
+  focusedParkCode,
+  searchQuery = "",
+}: {
+  groups: ParkGroup[];
+  groupMode?: GroupMode;
+  focusedParkCode?: string | null;
+  searchQuery?: string;
+}) {
+  "use no memo";
+
   const selectedId = useSelectedTrailId();
   const actions = useTrailActions();
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  // Auto-open the first group if there's only one, or the group containing the selected trail
-  const [openPark, setOpenPark] = useState<string | null>(() => {
-    if (!selectedId) return null;
-    const park = groups.find((g) => g.trails.some((t) => t.id === selectedId));
-    return park?.parkName ?? null;
-  });
-  const previousSelectedIdRef = useRef<string | null>(selectedId);
+  const [manualOpenPark, setManualOpenPark] = useState<string | null>(null);
+  const searchActive = searchQuery.trim().length > 0;
+  const focusedPark = focusedParkCode
+    ? groups.find((g) => g.parkCode.toLowerCase() === focusedParkCode)
+    : undefined;
+  const selectedPark = selectedId
+    ? groups.find((g) => g.trails.some((t) => t.id === selectedId))
+    : undefined;
+  const manualPark = manualOpenPark
+    ? groups.find((g) => g.parkName === manualOpenPark)
+    : undefined;
+  const openPark = focusedPark?.parkName ?? selectedPark?.parkName ?? manualPark?.parkName ?? null;
+  const rows = buildRows(groups, openPark, searchActive);
 
-  // Keep openPark in sync when groups change
-  const groupKey = groups.map((g) => g.parkName).join(",");
-  useEffect(() => {
-    setOpenPark((prev) => {
-      if (!prev) return null;
-      if (!groups.some((g) => g.parkName === prev)) {
-        return null;
-      }
-      return prev;
-    });
-  }, [groupKey, groups]);
-
-  // Open the group containing the selected trail
-  useEffect(() => {
-    if (!selectedId) return;
-    const park = groups.find((g) => g.trails.some((t) => t.id === selectedId));
-    if (park) setOpenPark(park.parkName);
-  }, [selectedId, groups]);
-
-  useEffect(() => {
-    if (previousSelectedIdRef.current && !selectedId) {
-      setOpenPark(null);
-    }
-    previousSelectedIdRef.current = selectedId;
-  }, [selectedId]);
-
-  const rows = buildRows(groups, openPark);
-
+  // TanStack Virtual manages mutable measurement functions internally.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => viewportRef.current,
@@ -83,8 +76,9 @@ export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]
   });
 
   function handleToggle(group: ParkGroup) {
+    if (searchActive) return;
     const willOpen = openPark !== group.parkName;
-    setOpenPark(willOpen ? group.parkName : null);
+    setManualOpenPark(willOpen ? group.parkName : null);
   }
 
   if (groups.length === 0) {
@@ -125,18 +119,18 @@ export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]
             >
               {row.kind === "header" ? (
                 <Collapsible
-                  open={openPark === row.group.parkName}
+                  open={searchActive || openPark === row.group.parkName}
                   onOpenChange={() => handleToggle(row.group)}
                 >
                   <CollapsibleTrigger className="flex w-full min-w-0 items-center gap-2 rounded-md px-3 py-2 text-left transition-colors hover:bg-sidebar-accent overflow-hidden">
                     <CaretRightIcon
                       className="size-3 shrink-0 text-muted-foreground transition-transform"
                       style={{
-                        transform: openPark === row.group.parkName ? "rotate(90deg)" : undefined,
+                        transform: searchActive || openPark === row.group.parkName ? "rotate(90deg)" : undefined,
                       }}
                     />
                     <span className="min-w-0 flex-1 truncate text-xs font-medium overflow-hidden">
-                      {row.group.parkName}
+                      <HighlightedText text={row.group.parkName} query={searchQuery} />
                     </span>
                     <Badge variant="secondary" className="shrink-0 text-[10px] px-2 py-0">
                       {row.group.trails.length}
@@ -150,7 +144,8 @@ export function TrailList({ groups, groupMode = "state" }: { groups: ParkGroup[]
                     trail={row.trail}
                     isSelected={selectedId === row.trail.id}
                     onSelect={() => actions.setSelectedTrailId(row.trail.id)}
-                    showLocation={groupMode === "state"}
+                    showLocation={groupMode === "state" || (searchActive && row.trail.location.toLowerCase().includes(searchQuery.trim().toLowerCase()))}
+                    searchQuery={searchQuery}
                   />
                 </div>
               )}
